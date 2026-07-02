@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房貸試算比較表</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a73e8;
+    --primary-dark: #1557b0;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --border: #e0e0e0;
+    --text: #202124;
+    --text-muted: #6b7280;
+    --green: #0f9d58;
+    --green-bg: #e6f4ea;
+    --yellow: #f9ab00;
+    --yellow-bg: #fef9e7;
+    --orange: #e67c22;
+    --orange-bg: #fdf2e9;
+    --red: #d32f2f;
+    --red-bg: #fce8e6;
+    --radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', '微軟正黑體', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color: #fff;
+    padding: 28px 24px 24px;
+    text-align: center;
+  }
+  header h1 { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; }
+  header p { margin-top: 6px; opacity: 0.85; font-size: 0.9rem; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  /* ── Parameters Card ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 18px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  .params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .param-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .param-group input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.95rem;
+    color: var(--text);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .param-group input:focus { border-color: var(--primary); }
+  .param-group .unit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  /* ── Price Scenarios ── */
+  .prices-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .prices-row label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .prices-row input {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 0.9rem;
+    width: 160px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .prices-row input:focus { border-color: var(--primary); }
+  .btn-add, .btn-remove {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  .btn-add { background: var(--primary); color: #fff; }
+  .btn-add:hover { background: var(--primary-dark); }
+  .btn-remove { background: #fce8e6; color: var(--red); }
+  .btn-remove:hover { background: #f5c6c6; }
+
+  .price-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .price-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #e8f0fe;
+    color: var(--primary-dark);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .price-tag button {
+    border: none;
+    background: transparent;
+    color: var(--primary-dark);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    opacity: 0.7;
+  }
+  .price-tag button:hover { opacity: 1; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 700px;
+  }
+  thead th {
+    background: #e8f0fe;
+    color: var(--primary-dark);
+    font-weight: 700;
+    padding: 12px 14px;
+    text-align: right;
+    border-bottom: 2px solid var(--primary);
+    white-space: nowrap;
+  }
+  thead th:first-child { text-align: left; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  tbody tr:hover { background: #f1f3f4; }
+  tbody td {
+    padding: 11px 14px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td:first-child { text-align: left; font-weight: 600; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .badge-green  { background: var(--green-bg);  color: var(--green); }
+  .badge-yellow { background: var(--yellow-bg); color: #b7791f; }
+  .badge-orange { background: var(--orange-bg); color: var(--orange); }
+  .badge-red    { background: var(--red-bg);    color: var(--red); }
+
+  /* ── Charts ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .chart-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+  .chart-wrap canvas { max-height: 320px; }
+
+  /* ── Notes ── */
+  .notes { font-size: 0.85rem; }
+  .notes h3 { font-size: 0.95rem; color: var(--text); margin-bottom: 10px; font-weight: 700; }
+  .notes ul { padding-left: 18px; }
+  .notes li { margin-bottom: 5px; color: var(--text-muted); }
+  .notes strong { color: var(--text); }
+
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .note-block {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 600px) {
+    .params-grid { grid-template-columns: 1fr 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 房貸試算比較表</h1>
+  <p>新青安 × 一般房貸組合試算，即時計算各方案負擔</p>
+</header>
+
+<div class="container">
+
+  <!-- Parameters -->
+  <div class="card">
+    <div class="card-title">貸款參數設定</div>
+    <div class="params-grid">
+      <div class="param-group">
+        <label>自備款（萬元）</label>
+        <input type="number" id="downPayment" value="600" min="0" step="10">
+      </div>
+      <div class="param-group">
+        <label>新青安利率（%）</label>
+        <input type="number" id="rateYoung" value="1.775" min="0" step="0.001">
+        <div class="unit">年利率</div>
+      </div>
+      <div class="param-group">
+        <label>一般房貸利率（%）</label>
+        <input type="number" id="rateNormal" value="2.5" min="0" step="0.001">
+        <div class="unit">年利率</div>
+      </div>
+      <div class="param-group">
+        <label>貸款年限（年）</label>
+        <input type="number" id="loanYears" value="40" min="1" max="40" step="1">
+      </div>
+      <div class="param-group">
+        <label>寬限期（年）</label>
+        <input type="number" id="gracePeriod" value="5" min="0" max="10" step="1">
+      </div>
+      <div class="param-group">
+        <label>新青安貸款上限（萬元）</label>
+        <input type="number" id="youngLimit" value="1000" min="0" step="100">
+      </div>
+      <div class="param-group">
+        <label>月收入（萬元）</label>
+        <input type="number" id="monthlyIncome" value="10" min="1" step="0.5">
+        <div class="unit">用於計算負擔比</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price Scenarios -->
+  <div class="card">
+    <div class="card-title">總房價方案</div>
+    <div class="prices-row">
+      <label>新增方案</label>
+      <input type="number" id="newPrice" placeholder="例：2400" min="0" step="100">
+      <button class="btn-add" onclick="addPrice()">＋ 新增</button>
+    </div>
+    <div class="price-tags" id="priceTags"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-title">試算比較表</div>
+    <div class="table-wrap">
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>總房價（萬）</th>
+            <th>新青安可貸（萬）</th>
+            <th>一般房貸缺口（萬）</th>
+            <th>總貸款（萬）</th>
+            <th>貸款成數</th>
+            <th>寬限期月付（元）</th>
+            <th>寬限後月付（元）</th>
+            <th>月收入負擔比</th>
+            <th>財務評估</th>
+            <th>現金緩衝（萬）</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-wrap">
+      <div class="card-title">月付金額比較（寬限期 vs 寬限後）</div>
+      <canvas id="barChart"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="card-title">負擔比趨勢圖</div>
+      <canvas id="lineChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="card notes">
+    <div class="card-title">計算說明</div>
+    <div class="notes-grid">
+      <div class="note-block">
+        <h3>📐 計算公式</h3>
+        <ul>
+          <li><strong>新青安可貸</strong> = MIN(房價 × 80%, 新青安上限)</li>
+          <li><strong>一般房貸缺口</strong> = MAX(房價 - 自備款 - 新青安可貸, 0)</li>
+          <li><strong>總貸款</strong> = 新青安可貸 + 一般房貸缺口</li>
+          <li><strong>寬限期月付</strong> = 新青安貸款 × 月利率 + 一般房貸缺口 × 月利率(一般)</li>
+          <li><strong>寬限後月付</strong> = PMT(新青安月利率, 剩餘期數, 新青安貸款) + PMT(一般月利率, 剩餘期數, 一般房貸)</li>
+          <li><strong>現金緩衝</strong> = 自備款 − (房價 − 總貸款)；負值代表自備款不足</li>
+        </ul>
+      </div>
+      <div class="note-block">
+        <h3>🏦 新青安貸款條件</h3>
+        <ul>
+          <li>適用對象：40 歲以下首購族</li>
+          <li>貸款上限：1,000 萬元</li>
+          <li>最高成數：房屋鑑價的 80%</li>
+          <li>利率優惠：約 1.775%（政府補貼後）</li>
+          <li>最長年限：40 年</li>
+          <li>寬限期：最長 5 年（僅付利息）</li>
+        </ul>
+      </div>
+      <div class="note-block">
+        <h3>📊 財務評估標準</h3>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-dot" style="background:#0f9d58"></span><span class="badge badge-green">健康</span> &lt; 30%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#f9ab00"></span><span class="badge badge-yellow">尚可</span> 30–40%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#e67c22"></span><span class="badge badge-orange">偏高</span> 40–50%</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span><span class="badge badge-red">危險</span> &gt; 50%</span>
+        </div>
+        <ul style="margin-top:10px">
+          <li>負擔比以<strong>寬限後月付</strong>計算，較為保守</li>
+          <li>建議保留 6 個月支出作為緊急預備金</li>
+          <li>以上為試算參考，不構成財務建議</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>僅供個人試算參考，實際條件請洽銀行確認。數據計算於本地端，不上傳任何資訊。</footer>
+
+<script>
+// ──────────────── State ────────────────
+let prices = [1900, 2000, 2100, 2200, 2300];
+let barChartInst = null;
+let lineChartInst = null;
+
+// ──────────────── DOM helpers ────────────────
+const $ = id => document.getElementById(id);
+const numVal = id => parseFloat($(id).value) || 0;
+
+// ──────────────── PMT ────────────────
+function pmt(rate, nper, pv) {
+  if (rate === 0) return pv / nper;
+  return pv * rate / (1 - Math.pow(1 + rate, -nper));
+}
+
+// ──────────────── Core calculation ────────────────
+function calcRow(totalPrice) {
+  const down       = numVal('downPayment');
+  const rateY      = numVal('rateYoung')  / 100 / 12;
+  const rateN      = numVal('rateNormal') / 100 / 12;
+  const years      = numVal('loanYears');
+  const grace      = numVal('gracePeriod');
+  const youngLimit = numVal('youngLimit');
+  const income     = numVal('monthlyIncome');
+
+  const youngLoan  = Math.min(totalPrice * 0.8, youngLimit);
+  const normalLoan = Math.max(totalPrice - down - youngLoan, 0);
+  const totalLoan  = youngLoan + normalLoan;
+  const ltv        = totalLoan / totalPrice;
+
+  // 寬限期月付（純利息）
+  const gracePayY  = youngLoan  * rateY;
+  const gracePayN  = normalLoan * rateN;
+  const gracePay   = gracePayY + gracePayN;
+
+  // 寬限後月付（本息攤還，剩餘期數）
+  const remMonths  = (years - grace) * 12;
+  const afterPayY  = remMonths > 0 ? pmt(rateY, remMonths, youngLoan)  : 0;
+  const afterPayN  = remMonths > 0 ? pmt(rateN, remMonths, normalLoan) : 0;
+  const afterPay   = afterPayY + afterPayN;
+
+  // 月收入負擔比（以萬元計）
+  const incomeWan  = income;
+  const afterPayWan = afterPay; // afterPay is in 萬 because all inputs are 萬
+  const ratio      = afterPayWan / incomeWan;
+
+  const cashBuffer = down - (totalPrice - totalLoan);
+
+  return { totalPrice, youngLoan, normalLoan, totalLoan, ltv,
+           gracePay, afterPay, ratio, cashBuffer };
+}
+
+// ──────────────── Badge ────────────────
+function ratioClass(r) {
+  if (r < 0.30) return ['badge-green',  '健康'];
+  if (r < 0.40) return ['badge-yellow', '尚可'];
+  if (r < 0.50) return ['badge-orange', '偏高'];
+  return              ['badge-red',    '危險'];
+}
+
+// ──────────────── Formatters ────────────────
+const fmtWan  = v => (Math.round(v * 10) / 10).toLocaleString() + ' 萬';
+const fmtPct  = v => (v * 100).toFixed(1) + '%';
+// Convert 萬元 monthly payment → 元 display
+const fmtPay  = v => Math.round(v * 10000).toLocaleString() + ' 元';
+
+// ──────────────── Price Tags ────────────────
+function renderTags() {
+  const wrap = $('priceTags');
+  wrap.innerHTML = '';
+  prices.forEach((p, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'price-tag';
+    tag.innerHTML = `${p} 萬 <button onclick="removePrice(${i})" title="移除">×</button>`;
+    wrap.appendChild(tag);
+  });
+}
+
+function addPrice() {
+  const val = parseFloat($('newPrice').value);
+  if (!val || val <= 0) return;
+  if (!prices.includes(val)) {
+    prices.push(val);
+    prices.sort((a, b) => a - b);
+  }
+  $('newPrice').value = '';
+  renderAll();
+}
+
+function removePrice(i) {
+  if (prices.length <= 1) return;
+  prices.splice(i, 1);
+  renderAll();
+}
+
+$('newPrice').addEventListener('keydown', e => { if (e.key === 'Enter') addPrice(); });
+
+// ──────────────── Table ────────────────
+function renderTable(rows) {
+  const tbody = $('tableBody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const [cls, label] = ratioClass(r.ratio);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.totalPrice} 萬</td>
+      <td>${fmtWan(r.youngLoan)}</td>
+      <td>${fmtWan(r.normalLoan)}</td>
+      <td>${fmtWan(r.totalLoan)}</td>
+      <td>${fmtPct(r.ltv)}</td>
+      <td>${fmtPay(r.gracePay)}</td>
+      <td>${fmtPay(r.afterPay)}</td>
+      <td>${fmtPct(r.ratio)}</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+      <td style="color:${r.cashBuffer < 0 ? 'var(--red)' : 'inherit'}">${fmtWan(r.cashBuffer)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ──────────────── Charts ────────────────
+const CHART_COLORS = {
+  grace:  'rgba(26,115,232,0.8)',
+  after:  'rgba(234,88,12,0.8)',
+  ratio:  'rgba(15,157,88,1)',
+  line30: 'rgba(249,171,0,0.8)',
+  line40: 'rgba(230,124,34,0.8)',
+  line50: 'rgba(211,47,47,0.8)',
+};
+
+function renderBarChart(rows) {
+  const labels  = rows.map(r => r.totalPrice + '萬');
+  const grace   = rows.map(r => Math.round(r.gracePay * 10000));
+  const after   = rows.map(r => Math.round(r.afterPay * 10000));
+
+  if (barChartInst) barChartInst.destroy();
+  barChartInst = new Chart($('barChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '寬限期月付（元）', data: grace, backgroundColor: CHART_COLORS.grace, borderRadius: 4 },
+        { label: '寬限後月付（元）', data: after,  backgroundColor: CHART_COLORS.after, borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + ' 元'
+          }
+        }
+      },
+      scales: {
+        y: { ticks: { callback: v => (v/10000).toFixed(1) + '萬' } }
+      }
+    }
+  });
+}
+
+function renderLineChart(rows) {
+  const labels = rows.map(r => r.totalPrice + '萬');
+  const ratios = rows.map(r => parseFloat((r.ratio * 100).toFixed(2)));
+  const n      = rows.length;
+
+  if (lineChartInst) lineChartInst.destroy();
+  lineChartInst = new Chart($('lineChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: '月收入負擔比（%）',
+          data: ratios,
+          borderColor: CHART_COLORS.ratio,
+          backgroundColor: 'rgba(15,157,88,0.08)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5,
+        },
+        { label: '30% 健康上限', data: Array(n).fill(30), borderColor: CHART_COLORS.line30, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0 },
+        { label: '40% 警戒線',  data: Array(n).fill(40), borderColor: CHART_COLORS.line40, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0 },
+        { label: '50% 危險線',  data: Array(n).fill(50), borderColor: CHART_COLORS.line50, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
+          }
+        }
+      },
+      scales: {
+        y: { ticks: { callback: v => v + '%' }, min: 0 }
+      }
+    }
+  });
+}
+
+// ──────────────── Main render ────────────────
+function renderAll() {
+  const rows = prices.map(calcRow);
+  renderTags();
+  renderTable(rows);
+  renderBarChart(rows);
+  renderLineChart(rows);
+}
+
+// ──────────────── Listeners ────────────────
+['downPayment','rateYoung','rateNormal','loanYears','gracePeriod','youngLimit','monthlyIncome']
+  .forEach(id => $(id).addEventListener('input', renderAll));
+
+// ──────────────── Init ────────────────
+renderAll();
+</script>
+</body>
+</html>
