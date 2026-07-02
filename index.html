@@ -315,6 +315,11 @@
         <input type="number" id="monthlyIncome" value="10" min="1" step="0.5">
         <div class="unit">用於計算負擔比</div>
       </div>
+      <div class="param-group">
+        <label>月補助 / 其他支應（萬元）</label>
+        <input type="number" id="monthlySubsidy" value="0" min="0" step="0.1">
+        <div class="unit">租金、補貼、家人支援等</div>
+      </div>
     </div>
   </div>
 
@@ -343,6 +348,7 @@
             <th>貸款成數</th>
             <th>寬限期月付（元）</th>
             <th>寬限後月付（元）</th>
+            <th>補助後月付（元）</th>
             <th>月收入負擔比</th>
             <th>財務評估</th>
             <th>現金緩衝（萬）</th>
@@ -377,6 +383,8 @@
           <li><strong>總貸款</strong> = 新青安可貸 + 一般房貸缺口</li>
           <li><strong>寬限期月付</strong> = 新青安貸款 × 月利率 + 一般房貸缺口 × 月利率(一般)</li>
           <li><strong>寬限後月付</strong> = PMT(新青安月利率, 剩餘期數, 新青安貸款) + PMT(一般月利率, 剩餘期數, 一般房貸)</li>
+          <li><strong>補助後月付</strong> = 寬限後月付 − 月補助（最低為 0）</li>
+          <li><strong>月收入負擔比</strong> = 補助後月付 ÷ 月收入</li>
           <li><strong>現金緩衝</strong> = 自備款 − (房價 − 總貸款)；負值代表自備款不足</li>
         </ul>
       </div>
@@ -438,6 +446,8 @@ function calcRow(totalPrice) {
   const youngLimit = numVal('youngLimit');
   const income     = numVal('monthlyIncome');
 
+  const subsidy    = numVal('monthlySubsidy');
+
   const youngLoan  = Math.min(totalPrice * 0.8, youngLimit);
   const normalLoan = Math.max(totalPrice - down - youngLoan, 0);
   const totalLoan  = youngLoan + normalLoan;
@@ -454,15 +464,16 @@ function calcRow(totalPrice) {
   const afterPayN  = remMonths > 0 ? pmt(rateN, remMonths, normalLoan) : 0;
   const afterPay   = afterPayY + afterPayN;
 
-  // 月收入負擔比（以萬元計）
-  const incomeWan  = income;
-  const afterPayWan = afterPay; // afterPay is in 萬 because all inputs are 萬
-  const ratio      = afterPayWan / incomeWan;
+  // 補助後實際月負擔
+  const netPay     = Math.max(afterPay - subsidy, 0);
+
+  // 月收入負擔比（以補助後月付計算）
+  const ratio      = netPay / income;
 
   const cashBuffer = down - (totalPrice - totalLoan);
 
   return { totalPrice, youngLoan, normalLoan, totalLoan, ltv,
-           gracePay, afterPay, ratio, cashBuffer };
+           gracePay, afterPay, netPay, ratio, cashBuffer };
 }
 
 // ──────────────── Badge ────────────────
@@ -525,6 +536,7 @@ function renderTable(rows) {
       <td>${fmtPct(r.ltv)}</td>
       <td>${fmtPay(r.gracePay)}</td>
       <td>${fmtPay(r.afterPay)}</td>
+      <td>${fmtPay(r.netPay)}</td>
       <td>${fmtPct(r.ratio)}</td>
       <td><span class="badge ${cls}">${label}</span></td>
       <td style="color:${r.cashBuffer < 0 ? 'var(--red)' : 'inherit'}">${fmtWan(r.cashBuffer)}</td>
@@ -576,9 +588,14 @@ function renderBarChart(rows) {
 }
 
 function renderLineChart(rows) {
-  const labels = rows.map(r => r.totalPrice + '萬');
-  const ratios = rows.map(r => parseFloat((r.ratio * 100).toFixed(2)));
-  const n      = rows.length;
+  const labels    = rows.map(r => r.totalPrice + '萬');
+  const subsidy   = numVal('monthlySubsidy');
+  // 未補助的原始負擔比（afterPay / income）
+  const income    = numVal('monthlyIncome');
+  const rawRatios = rows.map(r => parseFloat((r.afterPay / income * 100).toFixed(2)));
+  const netRatios = rows.map(r => parseFloat((r.ratio * 100).toFixed(2)));
+  const n         = rows.length;
+  const showNet   = subsidy > 0;
 
   if (lineChartInst) lineChartInst.destroy();
   lineChartInst = new Chart($('lineChart'), {
@@ -587,16 +604,28 @@ function renderLineChart(rows) {
       labels,
       datasets: [
         {
-          label: '月收入負擔比（%）',
-          data: ratios,
+          label: showNet ? '原始負擔比（%）' : '月收入負擔比（%）',
+          data: rawRatios,
           borderColor: CHART_COLORS.ratio,
           backgroundColor: 'rgba(15,157,88,0.08)',
-          fill: true,
+          fill: !showNet,
           tension: 0.3,
           pointRadius: 5,
           pointHoverRadius: 7,
           borderWidth: 2.5,
         },
+        ...(showNet ? [{
+          label: '補助後負擔比（%）',
+          data: netRatios,
+          borderColor: 'rgba(26,115,232,1)',
+          backgroundColor: 'rgba(26,115,232,0.08)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          borderWidth: 2.5,
+          borderDash: [4, 3],
+        }] : []),
         { label: '30% 健康上限', data: Array(n).fill(30), borderColor: CHART_COLORS.line30, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0 },
         { label: '40% 警戒線',  data: Array(n).fill(40), borderColor: CHART_COLORS.line40, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0 },
         { label: '50% 危險線',  data: Array(n).fill(50), borderColor: CHART_COLORS.line50, borderDash: [6,4], borderWidth: 1.5, pointRadius: 0 },
@@ -629,7 +658,7 @@ function renderAll() {
 }
 
 // ──────────────── Listeners ────────────────
-['downPayment','rateYoung','rateNormal','loanYears','gracePeriod','youngLimit','monthlyIncome']
+['downPayment','rateYoung','rateNormal','loanYears','gracePeriod','youngLimit','monthlyIncome','monthlySubsidy']
   .forEach(id => $(id).addEventListener('input', renderAll));
 
 // ──────────────── Init ────────────────
