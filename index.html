@@ -103,21 +103,50 @@
   }
 
   /* ── Bank Plans ── */
-  .plans-wrap { overflow-x: auto; }
-  .plan-head, .plan-row {
-    display: grid;
-    grid-template-columns: minmax(130px, 1.4fr) repeat(4, minmax(90px, 1fr)) 44px;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 8px;
-    min-width: 640px;
+  .plan-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
   }
-  .plan-head {
-    font-size: 0.78rem;
+  .plan-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .plan-card-top label {
+    font-size: 0.8rem;
     color: var(--text-muted);
     font-weight: 600;
+    white-space: nowrap;
   }
-  .plan-row input {
+  .plan-card-top input {
+    flex: 1;
+    min-width: 120px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .plan-card-top input:focus { border-color: var(--primary); }
+  .plan-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .plan-fields .field label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .plan-fields .field input {
     width: 100%;
     border: 1.5px solid var(--border);
     border-radius: 8px;
@@ -127,7 +156,7 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  .plan-row input:focus { border-color: var(--primary); }
+  .plan-fields .field input:focus { border-color: var(--primary); }
   .btn-add, .btn-remove {
     border: none;
     border-radius: 6px;
@@ -267,23 +296,6 @@
         <input type="number" id="downPayment" value="600" min="0" step="10">
       </div>
       <div class="param-group">
-        <label>新青安利率（%）</label>
-        <input type="number" id="rateYoung" value="1.775" min="0" step="0.001">
-        <div class="unit">年利率</div>
-      </div>
-      <div class="param-group">
-        <label>新青安年限（年）</label>
-        <input type="number" id="loanYears" value="40" min="1" max="40" step="1">
-      </div>
-      <div class="param-group">
-        <label>新青安寬限期（年）</label>
-        <input type="number" id="gracePeriod" value="5" min="0" max="10" step="1">
-      </div>
-      <div class="param-group">
-        <label>新青安貸款上限（萬元）</label>
-        <input type="number" id="youngLimit" value="1000" min="0" step="100">
-      </div>
-      <div class="param-group">
         <label>月收入（萬元）</label>
         <input type="number" id="monthlyIncome" value="10" min="1" step="0.5">
         <div class="unit">用於計算負擔比</div>
@@ -291,7 +303,7 @@
       <div class="param-group">
         <label>月補助 / 其他支應（萬元）</label>
         <input type="number" id="monthlySubsidy" value="0" min="0" step="0.1">
-        <div class="unit">租金、補貼、家人支援等</div>
+        <div class="unit">每月家裡可額外補助的金額</div>
       </div>
     </div>
   </div>
@@ -299,17 +311,7 @@
   <!-- Bank Plans -->
   <div class="card">
     <div class="card-title">銀行貸款方案比較</div>
-    <div class="plans-wrap">
-      <div class="plan-head">
-        <span>銀行 / 方案名稱</span>
-        <span>一般房貸利率（%）</span>
-        <span>最高成數（%）</span>
-        <span>年限（年）</span>
-        <span>寬限期（年）</span>
-        <span></span>
-      </div>
-      <div id="planList"></div>
-    </div>
+    <div id="planList"></div>
     <button class="btn-add" onclick="addPlan()">＋ 新增方案</button>
   </div>
 
@@ -378,7 +380,7 @@
           <li>利率優惠：約 1.775%（政府補貼後）</li>
           <li>最長年限：40 年</li>
           <li>寬限期：最長 5 年（僅付利息）</li>
-          <li>各銀行皆可承作，故各方案共用左方新青安參數</li>
+          <li>新青安利率／年限／上限已併入各方案欄位，可依銀行實際報價調整</li>
         </ul>
       </div>
       <div class="note-block">
@@ -391,7 +393,7 @@
         </div>
         <ul style="margin-top:10px">
           <li>負擔比以<strong>補助後月付</strong>計算</li>
-          <li>兩筆貸款寬限期長度不同時，以各自寬限結束後的本息月付加總估算</li>
+          <li>方案的寬限期同時適用新青安與一般房貸兩筆貸款</li>
           <li>建議保留 6 個月支出作為緊急預備金</li>
           <li>以上為試算參考，不構成財務建議</li>
         </ul>
@@ -406,9 +408,19 @@
 <script>
 // ──────────────── State ────────────────
 let plans = [
-  { name: '銀行 A', rate: 2.185, ltv: 80, years: 30, grace: 3 },
-  { name: '銀行 B', rate: 2.06,  ltv: 75, years: 30, grace: 2 },
-  { name: '銀行 C', rate: 2.5,   ltv: 80, years: 40, grace: 5 },
+  { name: '銀行 A', rate: 2.185, ltv: 80, years: 30, grace: 3, rateY: 1.775, yearsY: 40, youngLimit: 1000 },
+  { name: '銀行 B', rate: 2.06,  ltv: 75, years: 30, grace: 2, rateY: 1.775, yearsY: 40, youngLimit: 1000 },
+  { name: '銀行 C', rate: 2.5,   ltv: 80, years: 40, grace: 5, rateY: 1.775, yearsY: 40, youngLimit: 1000 },
+];
+
+const PLAN_FIELDS = [
+  { key: 'rate',       label: '一般房貸利率（%）',     min: 0, step: 0.001 },
+  { key: 'ltv',        label: '最高成數（%）',         min: 0, max: 100, step: 1 },
+  { key: 'years',      label: '年限（年）',            min: 1, max: 40, step: 1 },
+  { key: 'grace',      label: '寬限期（年）',          min: 0, max: 10, step: 1 },
+  { key: 'rateY',      label: '新青安利率（%）',       min: 0, step: 0.001 },
+  { key: 'yearsY',     label: '新青安年限（年）',      min: 1, max: 40, step: 1 },
+  { key: 'youngLimit', label: '新青安貸款上限（萬元）', min: 0, step: 100 },
 ];
 let barChartInst = null;
 let lineChartInst = null;
@@ -428,18 +440,15 @@ function pmt(rate, nper, pv) {
 function calcRow(plan) {
   const price      = numVal('totalPrice');
   const down       = numVal('downPayment');
-  const rateY      = numVal('rateYoung')  / 100 / 12;
-  const yearsY     = numVal('loanYears');
-  const graceY     = numVal('gracePeriod');
-  const youngLimit = numVal('youngLimit');
   const income     = numVal('monthlyIncome');
   const subsidy    = numVal('monthlySubsidy');
 
-  const rateN      = plan.rate / 100 / 12;
+  const rateY      = plan.rateY / 100 / 12;
+  const rateN      = plan.rate  / 100 / 12;
   const bankMax    = price * plan.ltv / 100;
 
   // 貸好貸滿：以該銀行最高成數貸款，自備款只投入必要頭期款，其餘保留為現金緩衝
-  const youngLoan  = Math.min(price * 0.8, youngLimit, bankMax);
+  const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
   const normalLoan = Math.max(bankMax - youngLoan, 0);
   const totalLoan  = youngLoan + normalLoan;
   const ltv        = price > 0 ? totalLoan / price : 0;
@@ -447,9 +456,9 @@ function calcRow(plan) {
   // 寬限期月付（純利息）
   const gracePay   = youngLoan * rateY + normalLoan * rateN;
 
-  // 寬限後月付（本息攤還，各貸款依自身年限/寬限期計算剩餘期數）
-  const remY       = (yearsY - graceY) * 12;
-  const remN       = (plan.years - plan.grace) * 12;
+  // 寬限後月付（本息攤還；方案的寬限期同時適用兩筆貸款）
+  const remY       = (plan.yearsY - plan.grace) * 12;
+  const remN       = (plan.years  - plan.grace) * 12;
   const afterPayY  = remY > 0 ? pmt(rateY, remY, youngLoan)  : 0;
   const afterPayN  = remN > 0 ? pmt(rateN, remN, normalLoan) : 0;
   const afterPay   = afterPayY + afterPayN;
@@ -488,17 +497,23 @@ function renderPlans() {
   const wrap = $('planList');
   wrap.innerHTML = '';
   plans.forEach((p, i) => {
-    const row = document.createElement('div');
-    row.className = 'plan-row';
-    row.innerHTML = `
-      <input type="text"   value="${escapeHtml(p.name)}" data-i="${i}" data-f="name">
-      <input type="number" value="${p.rate}"  min="0" step="0.001" data-i="${i}" data-f="rate">
-      <input type="number" value="${p.ltv}"   min="0" max="100" step="1" data-i="${i}" data-f="ltv">
-      <input type="number" value="${p.years}" min="1" max="40" step="1" data-i="${i}" data-f="years">
-      <input type="number" value="${p.grace}" min="0" max="10" step="1" data-i="${i}" data-f="grace">
-      <button class="btn-remove" onclick="removePlan(${i})" title="移除">×</button>
+    const card = document.createElement('div');
+    card.className = 'plan-card';
+    card.innerHTML = `
+      <div class="plan-card-top">
+        <label>銀行 / 方案名稱</label>
+        <input type="text" value="${escapeHtml(p.name)}" data-i="${i}" data-f="name">
+        <button class="btn-remove" onclick="removePlan(${i})" title="移除">× 移除</button>
+      </div>
+      <div class="plan-fields">
+        ${PLAN_FIELDS.map(f => `
+          <div class="field">
+            <label>${f.label}</label>
+            <input type="number" value="${p[f.key]}" min="${f.min}"${f.max !== undefined ? ` max="${f.max}"` : ''} step="${f.step}" data-i="${i}" data-f="${f.key}">
+          </div>`).join('')}
+      </div>
     `;
-    wrap.appendChild(row);
+    wrap.appendChild(card);
   });
   // 編輯欄位只重算結果、不重繪輸入列，避免打字時失去焦點
   wrap.querySelectorAll('input').forEach(inp => {
@@ -511,7 +526,7 @@ function renderPlans() {
 }
 
 function addPlan() {
-  plans.push({ name: `銀行 ${String.fromCharCode(65 + plans.length)}`, rate: 2.3, ltv: 80, years: 30, grace: 3 });
+  plans.push({ name: `銀行 ${String.fromCharCode(65 + plans.length)}`, rate: 2.3, ltv: 80, years: 30, grace: 3, rateY: 1.775, yearsY: 40, youngLimit: 1000 });
   renderAll();
 }
 
@@ -663,7 +678,7 @@ function renderAll() {
 }
 
 // ──────────────── Listeners ────────────────
-['totalPrice','downPayment','rateYoung','loanYears','gracePeriod','youngLimit','monthlyIncome','monthlySubsidy']
+['totalPrice','downPayment','monthlyIncome','monthlySubsidy']
   .forEach(id => $(id).addEventListener('input', renderResults));
 
 // ──────────────── Init ────────────────
