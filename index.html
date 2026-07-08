@@ -102,29 +102,32 @@
     margin-top: 3px;
   }
 
-  /* ── Price Scenarios ── */
-  .prices-row {
-    display: flex;
-    align-items: center;
+  /* ── Bank Plans ── */
+  .plans-wrap { overflow-x: auto; }
+  .plan-head, .plan-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 1.4fr) repeat(4, minmax(90px, 1fr)) 44px;
     gap: 8px;
-    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 8px;
+    min-width: 640px;
   }
-  .prices-row label {
-    font-size: 0.8rem;
+  .plan-head {
+    font-size: 0.78rem;
     color: var(--text-muted);
     font-weight: 600;
-    white-space: nowrap;
   }
-  .prices-row input {
+  .plan-row input {
+    width: 100%;
     border: 1.5px solid var(--border);
     border-radius: 8px;
-    padding: 9px 12px;
+    padding: 8px 10px;
     font-size: 0.9rem;
-    width: 160px;
+    color: var(--text);
     outline: none;
     transition: border-color 0.2s;
   }
-  .prices-row input:focus { border-color: var(--primary); }
+  .plan-row input:focus { border-color: var(--primary); }
   .btn-add, .btn-remove {
     border: none;
     border-radius: 6px;
@@ -134,39 +137,10 @@
     font-weight: 600;
     transition: background 0.2s;
   }
-  .btn-add { background: var(--primary); color: #fff; }
+  .btn-add { background: var(--primary); color: #fff; margin-top: 8px; }
   .btn-add:hover { background: var(--primary-dark); }
-  .btn-remove { background: #fce8e6; color: var(--red); }
+  .btn-remove { background: #fce8e6; color: var(--red); padding: 7px 12px; }
   .btn-remove:hover { background: #f5c6c6; }
-
-  .price-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .price-tag {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #e8f0fe;
-    color: var(--primary-dark);
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-  .price-tag button {
-    border: none;
-    background: transparent;
-    color: var(--primary-dark);
-    cursor: pointer;
-    font-size: 1rem;
-    line-height: 1;
-    padding: 0;
-    opacity: 0.7;
-  }
-  .price-tag button:hover { opacity: 1; }
 
   /* ── Table ── */
   .table-wrap { overflow-x: auto; }
@@ -275,7 +249,7 @@
 
 <header>
   <h1>🏠 房貸試算比較表</h1>
-  <p>新青安 × 一般房貸組合試算，即時計算各方案負擔</p>
+  <p>固定總房價，比較不同銀行貸款方案的月付與負擔</p>
 </header>
 
 <div class="container">
@@ -284,6 +258,10 @@
   <div class="card">
     <div class="card-title">貸款參數設定</div>
     <div class="params-grid">
+      <div class="param-group">
+        <label>總房價（萬元）</label>
+        <input type="number" id="totalPrice" value="2100" min="0" step="50">
+      </div>
       <div class="param-group">
         <label>自備款（萬元）</label>
         <input type="number" id="downPayment" value="600" min="0" step="10">
@@ -294,16 +272,11 @@
         <div class="unit">年利率</div>
       </div>
       <div class="param-group">
-        <label>一般房貸利率（%）</label>
-        <input type="number" id="rateNormal" value="2.5" min="0" step="0.001">
-        <div class="unit">年利率</div>
-      </div>
-      <div class="param-group">
-        <label>貸款年限（年）</label>
+        <label>新青安年限（年）</label>
         <input type="number" id="loanYears" value="40" min="1" max="40" step="1">
       </div>
       <div class="param-group">
-        <label>寬限期（年）</label>
+        <label>新青安寬限期（年）</label>
         <input type="number" id="gracePeriod" value="5" min="0" max="10" step="1">
       </div>
       <div class="param-group">
@@ -323,15 +296,21 @@
     </div>
   </div>
 
-  <!-- Price Scenarios -->
+  <!-- Bank Plans -->
   <div class="card">
-    <div class="card-title">總房價方案</div>
-    <div class="prices-row">
-      <label>新增方案</label>
-      <input type="number" id="newPrice" placeholder="例：2400" min="0" step="100">
-      <button class="btn-add" onclick="addPrice()">＋ 新增</button>
+    <div class="card-title">銀行貸款方案比較</div>
+    <div class="plans-wrap">
+      <div class="plan-head">
+        <span>銀行 / 方案名稱</span>
+        <span>一般房貸利率（%）</span>
+        <span>最高成數（%）</span>
+        <span>年限（年）</span>
+        <span>寬限期（年）</span>
+        <span></span>
+      </div>
+      <div id="planList"></div>
     </div>
-    <div class="price-tags" id="priceTags"></div>
+    <button class="btn-add" onclick="addPlan()">＋ 新增方案</button>
   </div>
 
   <!-- Table -->
@@ -341,9 +320,9 @@
       <table id="resultTable">
         <thead>
           <tr>
-            <th>總房價（萬）</th>
+            <th>方案</th>
             <th>新青安可貸（萬）</th>
-            <th>一般房貸缺口（萬）</th>
+            <th>一般房貸（萬）</th>
             <th>總貸款（萬）</th>
             <th>貸款成數</th>
             <th>寬限期月付（元）</th>
@@ -352,6 +331,7 @@
             <th>月收入負擔比</th>
             <th>財務評估</th>
             <th>現金緩衝（萬）</th>
+            <th>緩衝可撐（月）</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -366,7 +346,7 @@
       <canvas id="barChart"></canvas>
     </div>
     <div class="chart-wrap">
-      <div class="card-title">負擔比趨勢圖</div>
+      <div class="card-title">各方案負擔比比較</div>
       <canvas id="lineChart"></canvas>
     </div>
   </div>
@@ -378,14 +358,15 @@
       <div class="note-block">
         <h3>📐 計算公式</h3>
         <ul>
-          <li><strong>新青安可貸</strong> = MIN(房價 × 80%, 新青安上限)</li>
-          <li><strong>一般房貸缺口</strong> = MAX(房價 - 自備款 - 新青安可貸, 0)</li>
-          <li><strong>總貸款</strong> = 新青安可貸 + 一般房貸缺口</li>
-          <li><strong>寬限期月付</strong> = 新青安貸款 × 月利率 + 一般房貸缺口 × 月利率(一般)</li>
-          <li><strong>寬限後月付</strong> = PMT(新青安月利率, 剩餘期數, 新青安貸款) + PMT(一般月利率, 剩餘期數, 一般房貸)</li>
+          <li><strong>銀行最高可貸</strong> = 房價 × 該行最高成數</li>
+          <li><strong>新青安可貸</strong> = MIN(房價 × 80%, 新青安上限, 銀行最高可貸)</li>
+          <li><strong>一般房貸</strong> = 銀行最高可貸 − 新青安可貸（假設貸好貸滿）</li>
+          <li><strong>寬限期月付</strong> = 新青安貸款 × 新青安月利率 + 一般房貸 × 該行月利率</li>
+          <li><strong>寬限後月付</strong> = PMT(新青安利率, 新青安剩餘期數) + PMT(該行利率, 該行剩餘期數)</li>
           <li><strong>補助後月付</strong> = 寬限後月付 − 月補助（最低為 0）</li>
           <li><strong>月收入負擔比</strong> = 補助後月付 ÷ 月收入</li>
-          <li><strong>現金緩衝</strong> = 自備款 − (房價 − 總貸款)；負值代表自備款不足</li>
+          <li><strong>現金緩衝</strong> = 自備款 −（房價 − 總貸款），即未投入頭期款、保留在手上的現金；負值代表自備款不足</li>
+          <li><strong>緩衝可撐月數</strong> = 現金緩衝 ÷ 補助後月付；月補助越高、可撐越久</li>
         </ul>
       </div>
       <div class="note-block">
@@ -397,6 +378,7 @@
           <li>利率優惠：約 1.775%（政府補貼後）</li>
           <li>最長年限：40 年</li>
           <li>寬限期：最長 5 年（僅付利息）</li>
+          <li>各銀行皆可承作，故各方案共用左方新青安參數</li>
         </ul>
       </div>
       <div class="note-block">
@@ -408,7 +390,8 @@
           <span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span><span class="badge badge-red">危險</span> &gt; 50%</span>
         </div>
         <ul style="margin-top:10px">
-          <li>負擔比以<strong>寬限後月付</strong>計算，較為保守</li>
+          <li>負擔比以<strong>補助後月付</strong>計算</li>
+          <li>兩筆貸款寬限期長度不同時，以各自寬限結束後的本息月付加總估算</li>
           <li>建議保留 6 個月支出作為緊急預備金</li>
           <li>以上為試算參考，不構成財務建議</li>
         </ul>
@@ -422,13 +405,18 @@
 
 <script>
 // ──────────────── State ────────────────
-let prices = [1900, 2000, 2100, 2200, 2300];
+let plans = [
+  { name: '銀行 A', rate: 2.185, ltv: 80, years: 30, grace: 3 },
+  { name: '銀行 B', rate: 2.06,  ltv: 75, years: 30, grace: 2 },
+  { name: '銀行 C', rate: 2.5,   ltv: 80, years: 40, grace: 5 },
+];
 let barChartInst = null;
 let lineChartInst = null;
 
 // ──────────────── DOM helpers ────────────────
 const $ = id => document.getElementById(id);
 const numVal = id => parseFloat($(id).value) || 0;
+const escapeHtml = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 // ──────────────── PMT ────────────────
 function pmt(rate, nper, pv) {
@@ -437,43 +425,47 @@ function pmt(rate, nper, pv) {
 }
 
 // ──────────────── Core calculation ────────────────
-function calcRow(totalPrice) {
+function calcRow(plan) {
+  const price      = numVal('totalPrice');
   const down       = numVal('downPayment');
   const rateY      = numVal('rateYoung')  / 100 / 12;
-  const rateN      = numVal('rateNormal') / 100 / 12;
-  const years      = numVal('loanYears');
-  const grace      = numVal('gracePeriod');
+  const yearsY     = numVal('loanYears');
+  const graceY     = numVal('gracePeriod');
   const youngLimit = numVal('youngLimit');
   const income     = numVal('monthlyIncome');
-
   const subsidy    = numVal('monthlySubsidy');
 
-  const youngLoan  = Math.min(totalPrice * 0.8, youngLimit);
-  const normalLoan = Math.max(totalPrice - down - youngLoan, 0);
+  const rateN      = plan.rate / 100 / 12;
+  const bankMax    = price * plan.ltv / 100;
+
+  // 貸好貸滿：以該銀行最高成數貸款，自備款只投入必要頭期款，其餘保留為現金緩衝
+  const youngLoan  = Math.min(price * 0.8, youngLimit, bankMax);
+  const normalLoan = Math.max(bankMax - youngLoan, 0);
   const totalLoan  = youngLoan + normalLoan;
-  const ltv        = totalLoan / totalPrice;
+  const ltv        = price > 0 ? totalLoan / price : 0;
 
   // 寬限期月付（純利息）
-  const gracePayY  = youngLoan  * rateY;
-  const gracePayN  = normalLoan * rateN;
-  const gracePay   = gracePayY + gracePayN;
+  const gracePay   = youngLoan * rateY + normalLoan * rateN;
 
-  // 寬限後月付（本息攤還，剩餘期數）
-  const remMonths  = (years - grace) * 12;
-  const afterPayY  = remMonths > 0 ? pmt(rateY, remMonths, youngLoan)  : 0;
-  const afterPayN  = remMonths > 0 ? pmt(rateN, remMonths, normalLoan) : 0;
+  // 寬限後月付（本息攤還，各貸款依自身年限/寬限期計算剩餘期數）
+  const remY       = (yearsY - graceY) * 12;
+  const remN       = (plan.years - plan.grace) * 12;
+  const afterPayY  = remY > 0 ? pmt(rateY, remY, youngLoan)  : 0;
+  const afterPayN  = remN > 0 ? pmt(rateN, remN, normalLoan) : 0;
   const afterPay   = afterPayY + afterPayN;
 
   // 補助後實際月負擔
   const netPay     = Math.max(afterPay - subsidy, 0);
 
   // 月收入負擔比（以補助後月付計算）
-  const ratio      = netPay / income;
+  const ratio      = income > 0 ? netPay / income : 0;
 
-  const cashBuffer = down - (totalPrice - totalLoan);
+  // 現金緩衝（一次性現金）與可撐月數（受月補助影響）
+  const cashBuffer   = down - (price - totalLoan);
+  const bufferMonths = cashBuffer > 0 ? (netPay > 0 ? cashBuffer / netPay : Infinity) : null;
 
-  return { totalPrice, youngLoan, normalLoan, totalLoan, ltv,
-           gracePay, afterPay, netPay, ratio, cashBuffer };
+  return { plan, youngLoan, normalLoan, totalLoan, ltv,
+           gracePay, afterPay, netPay, ratio, cashBuffer, bufferMonths };
 }
 
 // ──────────────── Badge ────────────────
@@ -489,37 +481,45 @@ const fmtWan  = v => (Math.round(v * 10) / 10).toLocaleString() + ' 萬';
 const fmtPct  = v => (v * 100).toFixed(1) + '%';
 // Convert 萬元 monthly payment → 元 display
 const fmtPay  = v => Math.round(v * 10000).toLocaleString() + ' 元';
+const fmtMonths = v => v === null ? '—' : (v === Infinity ? '∞' : Math.round(v).toLocaleString() + ' 月');
 
-// ──────────────── Price Tags ────────────────
-function renderTags() {
-  const wrap = $('priceTags');
+// ──────────────── Bank Plans ────────────────
+function renderPlans() {
+  const wrap = $('planList');
   wrap.innerHTML = '';
-  prices.forEach((p, i) => {
-    const tag = document.createElement('span');
-    tag.className = 'price-tag';
-    tag.innerHTML = `${p} 萬 <button onclick="removePrice(${i})" title="移除">×</button>`;
-    wrap.appendChild(tag);
+  plans.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'plan-row';
+    row.innerHTML = `
+      <input type="text"   value="${escapeHtml(p.name)}" data-i="${i}" data-f="name">
+      <input type="number" value="${p.rate}"  min="0" step="0.001" data-i="${i}" data-f="rate">
+      <input type="number" value="${p.ltv}"   min="0" max="100" step="1" data-i="${i}" data-f="ltv">
+      <input type="number" value="${p.years}" min="1" max="40" step="1" data-i="${i}" data-f="years">
+      <input type="number" value="${p.grace}" min="0" max="10" step="1" data-i="${i}" data-f="grace">
+      <button class="btn-remove" onclick="removePlan(${i})" title="移除">×</button>
+    `;
+    wrap.appendChild(row);
+  });
+  // 編輯欄位只重算結果、不重繪輸入列，避免打字時失去焦點
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const { i, f } = e.target.dataset;
+      plans[i][f] = f === 'name' ? e.target.value : (parseFloat(e.target.value) || 0);
+      renderResults();
+    });
   });
 }
 
-function addPrice() {
-  const val = parseFloat($('newPrice').value);
-  if (!val || val <= 0) return;
-  if (!prices.includes(val)) {
-    prices.push(val);
-    prices.sort((a, b) => a - b);
-  }
-  $('newPrice').value = '';
+function addPlan() {
+  plans.push({ name: `銀行 ${String.fromCharCode(65 + plans.length)}`, rate: 2.3, ltv: 80, years: 30, grace: 3 });
   renderAll();
 }
 
-function removePrice(i) {
-  if (prices.length <= 1) return;
-  prices.splice(i, 1);
+function removePlan(i) {
+  if (plans.length <= 1) return;
+  plans.splice(i, 1);
   renderAll();
 }
-
-$('newPrice').addEventListener('keydown', e => { if (e.key === 'Enter') addPrice(); });
 
 // ──────────────── Table ────────────────
 function renderTable(rows) {
@@ -529,7 +529,7 @@ function renderTable(rows) {
     const [cls, label] = ratioClass(r.ratio);
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${r.totalPrice} 萬</td>
+      <td>${escapeHtml(r.plan.name)}</td>
       <td>${fmtWan(r.youngLoan)}</td>
       <td>${fmtWan(r.normalLoan)}</td>
       <td>${fmtWan(r.totalLoan)}</td>
@@ -540,6 +540,7 @@ function renderTable(rows) {
       <td>${fmtPct(r.ratio)}</td>
       <td><span class="badge ${cls}">${label}</span></td>
       <td style="color:${r.cashBuffer < 0 ? 'var(--red)' : 'inherit'}">${fmtWan(r.cashBuffer)}</td>
+      <td>${fmtMonths(r.bufferMonths)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -556,7 +557,7 @@ const CHART_COLORS = {
 };
 
 function renderBarChart(rows) {
-  const labels  = rows.map(r => r.totalPrice + '萬');
+  const labels  = rows.map(r => r.plan.name);
   const grace   = rows.map(r => Math.round(r.gracePay * 10000));
   const after   = rows.map(r => Math.round(r.afterPay * 10000));
 
@@ -588,7 +589,7 @@ function renderBarChart(rows) {
 }
 
 function renderLineChart(rows) {
-  const labels    = rows.map(r => r.totalPrice + '萬');
+  const labels    = rows.map(r => r.plan.name);
   const subsidy   = numVal('monthlySubsidy');
   // 未補助的原始負擔比（afterPay / income）
   const income    = numVal('monthlyIncome');
@@ -649,17 +650,21 @@ function renderLineChart(rows) {
 }
 
 // ──────────────── Main render ────────────────
-function renderAll() {
-  const rows = prices.map(calcRow);
-  renderTags();
+function renderResults() {
+  const rows = plans.map(calcRow);
   renderTable(rows);
   renderBarChart(rows);
   renderLineChart(rows);
 }
 
+function renderAll() {
+  renderPlans();
+  renderResults();
+}
+
 // ──────────────── Listeners ────────────────
-['downPayment','rateYoung','rateNormal','loanYears','gracePeriod','youngLimit','monthlyIncome','monthlySubsidy']
-  .forEach(id => $(id).addEventListener('input', renderAll));
+['totalPrice','downPayment','rateYoung','loanYears','gracePeriod','youngLimit','monthlyIncome','monthlySubsidy']
+  .forEach(id => $(id).addEventListener('input', renderResults));
 
 // ──────────────── Init ────────────────
 renderAll();
