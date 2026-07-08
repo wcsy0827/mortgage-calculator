@@ -171,6 +171,42 @@
   .btn-remove { background: #fce8e6; color: var(--red); padding: 7px 12px; }
   .btn-remove:hover { background: #f5c6c6; }
 
+  /* ── Amortization Schedule ── */
+  .sched-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .sched-controls label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .sched-controls select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+    min-width: 160px;
+  }
+  .sched-controls select:focus { border-color: var(--primary); }
+  .sched-scroll { max-height: 420px; overflow-y: auto; }
+  .sched-scroll thead th { position: sticky; top: 0; }
+  .grace-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--yellow-bg);
+    color: #b7791f;
+  }
+
   /* ── Table ── */
   .table-wrap { overflow-x: auto; }
   table {
@@ -353,6 +389,33 @@
     </div>
   </div>
 
+  <!-- Amortization Schedule -->
+  <div class="card">
+    <div class="card-title">年度本金／利息攤還表</div>
+    <div class="sched-controls">
+      <label>選擇方案</label>
+      <select id="schedPlan"></select>
+    </div>
+    <div style="position:relative;height:300px;margin-bottom:16px">
+      <canvas id="schedChart"></canvas>
+    </div>
+    <div class="table-wrap sched-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>年度</th>
+            <th>年繳總額（萬）</th>
+            <th>償還本金（萬）</th>
+            <th>支付利息（萬）</th>
+            <th>累計利息（萬）</th>
+            <th>年末剩餘本金（萬）</th>
+          </tr>
+        </thead>
+        <tbody id="schedBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Notes -->
   <div class="card notes">
     <div class="card-title">計算說明</div>
@@ -369,6 +432,7 @@
           <li><strong>月收入負擔比</strong> = 補助後月付 ÷ 月收入</li>
           <li><strong>現金緩衝</strong> = 自備款 −（房價 − 總貸款），即未投入頭期款、保留在手上的現金；負值代表自備款不足</li>
           <li><strong>緩衝可撐月數</strong> = 現金緩衝 ÷ 補助後月付；月補助越高、可撐越久</li>
+          <li><strong>年度攤還表</strong>：逐月模擬兩筆貸款（寬限期只繳息不還本），按年加總本金與利息</li>
         </ul>
       </div>
       <div class="note-block">
@@ -424,6 +488,8 @@ const PLAN_FIELDS = [
 ];
 let barChartInst = null;
 let lineChartInst = null;
+let schedChartInst = null;
+let schedPlanIdx = 0;
 
 // ──────────────── DOM helpers ────────────────
 const $ = id => document.getElementById(id);
@@ -475,6 +541,106 @@ function calcRow(plan) {
 
   return { plan, youngLoan, normalLoan, totalLoan, ltv,
            gracePay, afterPay, netPay, ratio, cashBuffer, bufferMonths };
+}
+
+// ──────────────── Yearly amortization ────────────────
+// 逐月模擬兩筆貸款（寬限期只繳息），彙總成年度本金／利息
+function amortYearly(plan) {
+  const price   = numVal('totalPrice');
+  const bankMax = price * plan.ltv / 100;
+  const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
+  const normalLoan = Math.max(bankMax - youngLoan, 0);
+
+  const loans = [
+    { bal: youngLoan,  rate: plan.rateY / 100 / 12, months: plan.yearsY * 12, grace: plan.grace * 12 },
+    { bal: normalLoan, rate: plan.rate  / 100 / 12, months: plan.years  * 12, grace: plan.grace * 12 },
+  ].filter(l => l.bal > 0);
+  loans.forEach(l => {
+    l.grace = Math.min(l.grace, l.months);
+    l.pay   = l.months > l.grace ? pmt(l.rate, l.months - l.grace, l.bal) : 0;
+  });
+
+  const totalMonths = Math.max(0, ...loans.map(l => l.months));
+  const years = [];
+  for (let m = 1; m <= totalMonths; m++) {
+    let pri = 0, intr = 0;
+    loans.forEach(l => {
+      if (m > l.months || l.bal <= 0) return;
+      const i = l.bal * l.rate;
+      intr += i;
+      if (m > l.grace) {
+        const p = Math.min(l.pay - i, l.bal);
+        l.bal -= p;
+        pri += p;
+      }
+    });
+    const y = Math.ceil(m / 12) - 1;
+    if (!years[y]) years[y] = { year: y + 1, principal: 0, interest: 0, balance: 0 };
+    years[y].principal += pri;
+    years[y].interest  += intr;
+    years[y].balance    = loans.reduce((s, l) => s + Math.max(l.bal, 0), 0);
+  }
+  let cum = 0;
+  years.forEach(yr => {
+    yr.total = yr.principal + yr.interest;
+    cum += yr.interest;
+    yr.cumInterest = cum;
+  });
+  return years;
+}
+
+function renderSchedule() {
+  const sel = $('schedPlan');
+  if (schedPlanIdx >= plans.length) schedPlanIdx = plans.length - 1;
+  sel.innerHTML = plans.map((p, i) =>
+    `<option value="${i}"${i === schedPlanIdx ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+
+  const years = amortYearly(plans[schedPlanIdx]);
+
+  const tbody = $('schedBody');
+  tbody.innerHTML = '';
+  years.forEach(yr => {
+    const isGrace = yr.principal < 0.0001 && yr.balance > 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>第 ${yr.year} 年${isGrace ? '<span class="grace-tag">寬限</span>' : ''}</td>
+      <td>${fmtWan(yr.total)}</td>
+      <td>${fmtWan(yr.principal)}</td>
+      <td>${fmtWan(yr.interest)}</td>
+      <td>${fmtWan(yr.cumInterest)}</td>
+      <td>${fmtWan(yr.balance)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const labels = years.map(yr => '第' + yr.year + '年');
+  if (schedChartInst) schedChartInst.destroy();
+  schedChartInst = new Chart($('schedChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '本金（萬）', data: years.map(yr => Math.round(yr.principal * 10) / 10), backgroundColor: CHART_COLORS.grace },
+        { label: '利息（萬）', data: years.map(yr => Math.round(yr.interest  * 10) / 10), backgroundColor: CHART_COLORS.after },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.dataset.label.replace('（萬）', '') + ': ' + ctx.parsed.y.toLocaleString() + ' 萬'
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true, ticks: { callback: v => v + '萬' } }
+      }
+    }
+  });
 }
 
 // ──────────────── Badge ────────────────
@@ -670,6 +836,7 @@ function renderResults() {
   renderTable(rows);
   renderBarChart(rows);
   renderLineChart(rows);
+  renderSchedule();
 }
 
 function renderAll() {
@@ -680,6 +847,11 @@ function renderAll() {
 // ──────────────── Listeners ────────────────
 ['totalPrice','downPayment','monthlyIncome','monthlySubsidy']
   .forEach(id => $(id).addEventListener('input', renderResults));
+
+$('schedPlan').addEventListener('change', e => {
+  schedPlanIdx = parseInt(e.target.value, 10) || 0;
+  renderSchedule();
+});
 
 // ──────────────── Init ────────────────
 renderAll();
