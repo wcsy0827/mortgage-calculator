@@ -102,22 +102,6 @@
     margin-top: 3px;
   }
 
-  /* ── Down payment mode ── */
-  .dp-row { display: flex; gap: 8px; }
-  .dp-row select {
-    flex: 0 0 auto;
-    width: 116px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 8px;
-    font-size: 0.85rem;
-    color: var(--text);
-    background: var(--card);
-    outline: none;
-  }
-  .dp-row select:focus { border-color: var(--primary); }
-  .dp-row input[readonly] { background: #f1f3f4; color: var(--text-muted); }
-
   /* ── Xinqingan compare card ── */
   .xq-compare {
     display: grid;
@@ -482,23 +466,6 @@
         <input type="number" id="totalPrice" value="2100" min="0" step="50">
       </div>
       <div class="param-group">
-        <label>自備款（萬元）</label>
-        <div class="dp-row">
-          <select id="downPaymentMode">
-            <option value="manual">手動輸入</option>
-            <option value="0.1">一成 (10%)</option>
-            <option value="0.15">一成五 (15%)</option>
-            <option value="0.2">二成 (20%)</option>
-            <option value="0.25">二成五 (25%)</option>
-            <option value="0.3">三成 (30%)</option>
-            <option value="0.35">三成五 (35%)</option>
-            <option value="0.4">四成 (40%)</option>
-          </select>
-          <input type="number" id="downPayment" value="600" min="0" step="10">
-        </div>
-        <div class="unit" id="downPaymentUnit"></div>
-      </div>
-      <div class="param-group">
         <label>月收入（萬元）</label>
         <input type="number" id="monthlyIncome" value="10" min="1" step="0.5">
         <div class="unit">用於計算負擔比</div>
@@ -531,12 +498,10 @@
             <th>總貸款（萬）</th>
             <th>貸款成數</th>
             <th>首年月付（元）</th>
-            <th>長期月付／第8年起（元）</th>
-            <th>補助後月付（元）</th>
+            <th>長期月付／第8年起（元，補助後）</th>
+            <th>首年補助後月付（元）</th>
             <th>月收入負擔比</th>
             <th>財務評估</th>
-            <th>現金緩衝（萬）</th>
-            <th>緩衝可撐（月）</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -618,12 +583,10 @@
         <ul>
           <li><strong>8 大行庫方案</strong>：新青安可貸 = MIN(房價 × 80%, 新青安上限, 銀行最高可貸)；一般房貸 = 銀行最高可貸 − 新青安可貸（貸好貸滿）</li>
           <li><strong>一般民營銀行方案</strong>：貸款 A、貸款 B 為兩筆完全獨立的貸款（各自額度／利率／年限），總貸款 = A + B</li>
-          <li><strong>首年月付</strong> = 寬限期間（或無寬限期時的第 1 個月）以「第 1 年利率」計算之月付；8 大行庫新青安部分固定套用新青安 2.0 階梯利率表第 1 年利率</li>
-          <li><strong>長期月付／第8年起</strong> = 以新青安 2.0 補貼完全退場後的基準利率（第 8 年起）試算之月付，用於對照補貼結束後的負擔變化</li>
-          <li><strong>補助後月付</strong> = 首年月付 − 月補助（最低為 0）</li>
-          <li><strong>月收入負擔比</strong> = 補助後月付 ÷ 月收入</li>
-          <li><strong>現金緩衝</strong> = 自備款 −（房價 − 總貸款），即未投入頭期款、保留在手上的現金；負值代表自備款不足</li>
-          <li><strong>緩衝可撐月數</strong> = 現金緩衝 ÷ 補助後月付；月補助越高、可撐越久</li>
+          <li><strong>首年月付</strong> = 寬限期間（或無寬限期時的第 1 個月）以「第 1 年利率」計算之月付（未扣除月補助）；8 大行庫新青安部分固定套用新青安 2.0 階梯利率表第 1 年利率</li>
+          <li><strong>長期月付／第8年起（補助後）</strong> = 以新青安 2.0 補貼完全退場後的基準利率（第 8 年起）試算之月付，再扣除月補助（最低為 0），用於對照補貼結束後的長期負擔</li>
+          <li><strong>首年補助後月付</strong> = 首年月付 − 月補助（最低為 0）</li>
+          <li><strong>月收入負擔比</strong> = 首年補助後月付 ÷ 月收入</li>
           <li><strong>年度攤還表</strong>：逐月模擬（寬限期只繳息不還本），8 大行庫新青安部分依 2.0 階梯利率逐年變動，每次利率換檔即以當時剩餘本金／期數重新攤提月付</li>
         </ul>
       </div>
@@ -730,24 +693,6 @@ function pmt(rate, nper, pv) {
   return pv * rate / (1 - Math.pow(1 + rate, -nper));
 }
 
-// ──────────────── Down payment mode ────────────────
-function syncDownPaymentFromMode() {
-  const mode = $('downPaymentMode').value;
-  const dp = $('downPayment');
-  const unit = $('downPaymentUnit');
-  if (mode === 'manual') {
-    dp.removeAttribute('readonly');
-    unit.textContent = '';
-    return;
-  }
-  const pct = parseFloat(mode);
-  const price = numVal('totalPrice');
-  const val = Math.round(price * pct * 10) / 10;
-  dp.value = val;
-  dp.setAttribute('readonly', 'readonly');
-  unit.textContent = `= ${val.toLocaleString()} 萬（總房價 ${Math.round(pct * 100)}%）`;
-}
-
 // ──────────────── Xinqingan 2.0 schedule UI ────────────────
 function renderXqSchedule() {
   const row = $('xqScheduleRow');
@@ -775,22 +720,42 @@ function syncPrivateLtv(p) {
 }
 
 // ──────────────── Core calculation ────────────────
-function calcRow(plan) {
-  const price   = numVal('totalPrice');
-  const down    = numVal('downPayment');
-  const income  = numVal('monthlyIncome');
-  const subsidy = numVal('monthlySubsidy');
-  const grace   = plan.grace;
-
-  let loanOne, loanTwo, totalLoan, ltv, yr1Pay, longPay;
-
+// 依銀行類型算出兩筆貸款金額與總貸款成數，calcRow 與自備款估算共用
+function loanBreakdown(plan) {
+  const price = numVal('totalPrice');
   if (plan.bankType === 'public8') {
     const bankMax    = price * plan.ltv / 100;
     const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
     const normalLoan = Math.max(bankMax - youngLoan, 0);
-    totalLoan = youngLoan + normalLoan;
-    ltv       = price > 0 ? totalLoan / price : 0;
+    const totalLoan  = youngLoan + normalLoan;
+    return { loanOne: youngLoan, loanTwo: normalLoan, totalLoan, ltv: price > 0 ? totalLoan / price : 0 };
+  }
+  const { loanA, loanB } = plan;
+  const totalLoan = loanA.amount + loanB.amount;
+  return { loanOne: loanA.amount, loanTwo: loanB.amount, totalLoan, ltv: plan.ltv / 100 };
+}
 
+// 自備款（估）＝ 房價 − 總貸款
+function planDownPayment(plan) {
+  return numVal('totalPrice') - loanBreakdown(plan).totalLoan;
+}
+
+function planDownNoteHtml(plan) {
+  const down = planDownPayment(plan);
+  const color = down < 0 ? 'var(--red)' : 'inherit';
+  return `自備款（估）＝ 房價 − 總貸款 = <strong style="color:${color}">${fmtWan(down)}</strong>${down < 0 ? '（貸款超過房價，請確認參數）' : ''}`;
+}
+
+function calcRow(plan) {
+  const income  = numVal('monthlyIncome');
+  const subsidy = numVal('monthlySubsidy');
+  const grace   = plan.grace;
+
+  const { loanOne, loanTwo, totalLoan, ltv } = loanBreakdown(plan);
+
+  let yr1Pay, longPay;
+
+  if (plan.bankType === 'public8') {
     const rateY1 = xqRate(1) / 100 / 12;
     const rateY8 = xqRate(8) / 100 / 12;
     const rateN  = plan.rate / 100 / 12;
@@ -798,18 +763,12 @@ function calcRow(plan) {
     const remN   = (plan.years  - grace) * 12;
 
     yr1Pay = grace > 0
-      ? youngLoan * rateY1 + normalLoan * rateN
-      : (remY > 0 ? pmt(rateY1, remY, youngLoan) : 0) + (remN > 0 ? pmt(rateN, remN, normalLoan) : 0);
+      ? loanOne * rateY1 + loanTwo * rateN
+      : (remY > 0 ? pmt(rateY1, remY, loanOne) : 0) + (remN > 0 ? pmt(rateN, remN, loanTwo) : 0);
 
-    longPay = (remY > 0 ? pmt(rateY8, remY, youngLoan) : 0) + (remN > 0 ? pmt(rateN, remN, normalLoan) : 0);
-
-    loanOne = youngLoan;
-    loanTwo = normalLoan;
+    longPay = (remY > 0 ? pmt(rateY8, remY, loanOne) : 0) + (remN > 0 ? pmt(rateN, remN, loanTwo) : 0);
   } else {
     const { loanA, loanB } = plan;
-    totalLoan = loanA.amount + loanB.amount;
-    ltv       = plan.ltv / 100;
-
     const rateA = loanA.rate / 100 / 12;
     const rateB = loanB.rate / 100 / 12;
     const remA  = (loanA.years - grace) * 12;
@@ -820,19 +779,14 @@ function calcRow(plan) {
       : (remA > 0 ? pmt(rateA, remA, loanA.amount) : 0) + (remB > 0 ? pmt(rateB, remB, loanB.amount) : 0);
 
     longPay = (remA > 0 ? pmt(rateA, remA, loanA.amount) : 0) + (remB > 0 ? pmt(rateB, remB, loanB.amount) : 0);
-
-    loanOne = loanA.amount;
-    loanTwo = loanB.amount;
   }
 
-  const netPay = Math.max(yr1Pay - subsidy, 0);
-  const ratio  = income > 0 ? netPay / income : 0;
-
-  const cashBuffer   = down - (price - totalLoan);
-  const bufferMonths = cashBuffer > 0 ? (netPay > 0 ? cashBuffer / netPay : Infinity) : null;
+  const netPay     = Math.max(yr1Pay - subsidy, 0);
+  const netLongPay = Math.max(longPay - subsidy, 0);
+  const ratio      = income > 0 ? netPay / income : 0;
 
   return { plan, loanOne, loanTwo, totalLoan, ltv,
-           yr1Pay, longPay, netPay, ratio, cashBuffer, bufferMonths };
+           yr1Pay, longPay: netLongPay, netPay, ratio };
 }
 
 // ──────────────── Amortization helpers ────────────────
@@ -1025,7 +979,6 @@ const fmtWan  = v => (Math.round(v * 10) / 10).toLocaleString() + ' 萬';
 const fmtPct  = v => (v * 100).toFixed(1) + '%';
 // Convert 萬元 monthly payment → 元 display
 const fmtPay  = v => Math.round(v * 10000).toLocaleString() + ' 元';
-const fmtMonths = v => v === null ? '—' : (v === Infinity ? '∞' : Math.round(v).toLocaleString() + ' 月');
 
 // ──────────────── Bank Plans ────────────────
 function renderPlans() {
@@ -1064,6 +1017,7 @@ function renderPlans() {
             <input type="number" value="${getField(p, f.key)}" min="${f.min}"${f.max !== undefined ? ` max="${f.max}"` : ''} step="${f.step}" data-i="${i}" data-f="${f.key}">
           </div>`).join('')}
       </div>
+      <div class="field-note plan-down-note">${planDownNoteHtml(p)}</div>
     `;
     wrap.appendChild(card);
   });
@@ -1107,12 +1061,14 @@ function renderPlans() {
       const idx = parseInt(i, 10);
       const val = f === 'name' ? e.target.value : (parseFloat(e.target.value) || 0);
       setField(plans[idx], f, val);
+      const card = e.target.closest('.plan-card');
       if (plans[idx].bankType === 'private' && (f === 'loanA.amount' || f === 'loanB.amount')) {
         syncPrivateLtv(plans[idx]);
-        const card = e.target.closest('.plan-card');
         const ltvInput = card.querySelector('input[data-f="ltv"]');
         if (ltvInput) ltvInput.value = plans[idx].ltv;
       }
+      const downNote = card.querySelector('.plan-down-note');
+      if (downNote) downNote.innerHTML = planDownNoteHtml(plans[idx]);
       renderResults();
     });
   });
@@ -1150,8 +1106,6 @@ function renderTable(rows) {
       <td>${fmtPay(r.netPay)}</td>
       <td>${fmtPct(r.ratio)}</td>
       <td><span class="badge ${cls}">${label}</span></td>
-      <td style="color:${r.cashBuffer < 0 ? 'var(--red)' : 'inherit'}">${fmtWan(r.cashBuffer)}</td>
-      <td>${fmtMonths(r.bufferMonths)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1179,7 +1133,7 @@ function renderBarChart(rows) {
       labels,
       datasets: [
         { label: '首年月付（元）', data: yr1,  backgroundColor: CHART_COLORS.grace, borderRadius: 4 },
-        { label: '長期／第8年起月付（元）', data: long, backgroundColor: CHART_COLORS.after, borderRadius: 4 },
+        { label: '長期／第8年起月付（元，補助後）', data: long, backgroundColor: CHART_COLORS.after, borderRadius: 4 },
       ]
     },
     options: {
@@ -1276,16 +1230,8 @@ function renderAll() {
 
 // ──────────────── Listeners ────────────────
 $('totalPrice').addEventListener('input', () => {
-  syncDownPaymentFromMode();
   plans.forEach(p => { if (p.bankType === 'private') syncPrivateLtv(p); });
   renderAll();
-});
-
-$('downPayment').addEventListener('input', renderResults);
-
-$('downPaymentMode').addEventListener('change', () => {
-  syncDownPaymentFromMode();
-  renderResults();
 });
 
 ['monthlyIncome', 'monthlySubsidy']
@@ -1304,7 +1250,6 @@ $('schedMonthYear').addEventListener('change', e => {
 // ──────────────── Init ────────────────
 plans.forEach(p => { if (p.bankType === 'private') syncPrivateLtv(p); });
 renderXqSchedule();
-syncDownPaymentFromMode();
 renderAll();
 </script>
 </body>
