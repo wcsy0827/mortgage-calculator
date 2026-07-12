@@ -102,12 +102,112 @@
     margin-top: 3px;
   }
 
+  /* ── Down payment mode ── */
+  .dp-row { display: flex; gap: 8px; }
+  .dp-row select {
+    flex: 0 0 auto;
+    width: 116px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 8px;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+  }
+  .dp-row select:focus { border-color: var(--primary); }
+  .dp-row input[readonly] { background: #f1f3f4; color: var(--text-muted); }
+
+  /* ── Xinqingan compare card ── */
+  .xq-compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .xq-version {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+    border-top: 4px solid var(--border);
+  }
+  .xq-version.v1 { border-top-color: var(--text-muted); }
+  .xq-version.v2 { border-top-color: var(--primary); }
+  .xq-version h3 { font-size: 0.95rem; margin-bottom: 8px; }
+  .xq-version ul { padding-left: 18px; font-size: 0.85rem; }
+  .xq-version li { margin-bottom: 5px; color: var(--text-muted); }
+  .xq-version li strong { color: var(--text); }
+  .xq-disclaimer {
+    margin-top: 14px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: var(--yellow-bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  /* ── Stepped rate schedule ── */
+  .rate-schedule-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 12px; }
+  .rate-schedule-table th, .rate-schedule-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+  .rate-schedule-table th { color: var(--text-muted); font-weight: 700; }
+  .rate-schedule-table input {
+    width: 90px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.88rem;
+    text-align: center;
+    outline: none;
+  }
+  .rate-schedule-table input:focus { border-color: var(--primary); }
+  .btn-reset {
+    border: 1.5px solid var(--border);
+    background: #fff;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .btn-reset:hover { border-color: var(--primary); color: var(--primary); }
+
   /* ── Bank Plans ── */
   .plan-card {
     border: 1.5px solid var(--border);
     border-radius: 10px;
     padding: 16px;
     margin-bottom: 14px;
+  }
+  .plan-type-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .plan-type-row label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .plan-type-row select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+  }
+  .plan-type-row select:focus { border-color: var(--primary); }
+  .field-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 6px 10px;
   }
   .plan-card-top {
     display: flex;
@@ -247,6 +347,18 @@
   .badge-orange { background: var(--orange-bg); color: var(--orange); }
   .badge-red    { background: var(--red-bg);    color: var(--red); }
 
+  .loan-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: #e8f0fe;
+    color: var(--primary-dark);
+    margin-left: 6px;
+    white-space: nowrap;
+  }
+
   /* ── Charts ── */
   .charts-grid {
     display: grid;
@@ -319,6 +431,48 @@
 
 <div class="container">
 
+  <!-- Xinqingan 1.0 vs 2.0 -->
+  <div class="card">
+    <div class="card-title">🆕 新青安 1.0 vs 2.0</div>
+    <div class="xq-compare">
+      <div class="xq-version v1">
+        <h3>新青安 1.0（現行）</h3>
+        <ul>
+          <li><strong>利率</strong>：混合式，第 1 年 1.745%、第 2 年 1.845%、第 3 年起 1.865%（政府與承貸行庫合計補貼 2 碼，優惠後約落在 1.775% 上下）</li>
+          <li><strong>貸款上限</strong>：1,000 萬元</li>
+          <li><strong>最長年限</strong>：40 年</li>
+          <li><strong>寬限期</strong>：最長 5 年（僅付利息）</li>
+          <li><strong>對象</strong>：40 歲以下首購族</li>
+        </ul>
+      </div>
+      <div class="xq-version v2">
+        <h3>新青安 2.0（草案，預計 2026/8/1 上路）</h3>
+        <ul>
+          <li><strong>利率</strong>：改採 7 年階梯式遞減補貼，第 1–3 年約 2.03%、第 4 年約 2.09%、第 5 年約 2.15%、第 6–7 年約 2.21%，第 8 年起補貼歸零、回到基準利率約 2.275%</li>
+          <li><strong>貸款上限</strong>：1,000 萬元（草案：育有未成年子女家庭上限可能提高至 1,500 萬）</li>
+          <li><strong>新增排富</strong>：年收入 200 萬元以上不得申貸；房屋總價依縣市高價住宅門檻分級限制</li>
+          <li><strong>年齡限制</strong>：申貸年齡上限 50 歲，且年齡＋貸款年數 ≤ 80</li>
+          <li><strong>寬限期／成數</strong>：維持最長 5 年／最高 8 成</li>
+        </ul>
+      </div>
+    </div>
+    <div class="xq-disclaimer">⚠️ 以上為 2026/7 媒體報導之草案內容，實際規定以內政部正式公告為準。本工具已將新青安 2.0 階梯利率作為預設計算基礎，可於下方「新青安 2.0 階梯利率設定」自行調整。</div>
+  </div>
+
+  <!-- Xinqingan 2.0 rate schedule -->
+  <div class="card">
+    <div class="card-title">新青安 2.0 階梯利率設定</div>
+    <table class="rate-schedule-table">
+      <thead>
+        <tr><th>第 1–3 年</th><th>第 4 年</th><th>第 5 年</th><th>第 6–7 年</th><th>第 8 年起</th></tr>
+      </thead>
+      <tbody>
+        <tr id="xqScheduleRow"></tr>
+      </tbody>
+    </table>
+    <button class="btn-reset" onclick="resetXqSchedule()">還原政府草案預設值</button>
+  </div>
+
   <!-- Parameters -->
   <div class="card">
     <div class="card-title">貸款參數設定</div>
@@ -329,7 +483,20 @@
       </div>
       <div class="param-group">
         <label>自備款（萬元）</label>
-        <input type="number" id="downPayment" value="600" min="0" step="10">
+        <div class="dp-row">
+          <select id="downPaymentMode">
+            <option value="manual">手動輸入</option>
+            <option value="0.1">一成 (10%)</option>
+            <option value="0.15">一成五 (15%)</option>
+            <option value="0.2">二成 (20%)</option>
+            <option value="0.25">二成五 (25%)</option>
+            <option value="0.3">三成 (30%)</option>
+            <option value="0.35">三成五 (35%)</option>
+            <option value="0.4">四成 (40%)</option>
+          </select>
+          <input type="number" id="downPayment" value="600" min="0" step="10">
+        </div>
+        <div class="unit" id="downPaymentUnit"></div>
       </div>
       <div class="param-group">
         <label>月收入（萬元）</label>
@@ -359,12 +526,12 @@
         <thead>
           <tr>
             <th>方案</th>
-            <th>新青安可貸（萬）</th>
-            <th>一般房貸（萬）</th>
+            <th>貸款一（萬）</th>
+            <th>貸款二（萬）</th>
             <th>總貸款（萬）</th>
             <th>貸款成數</th>
-            <th>寬限期月付（元）</th>
-            <th>寬限後月付（元）</th>
+            <th>首年月付（元）</th>
+            <th>長期月付／第8年起（元）</th>
             <th>補助後月付（元）</th>
             <th>月收入負擔比</th>
             <th>財務評估</th>
@@ -380,7 +547,7 @@
   <!-- Charts -->
   <div class="charts-grid">
     <div class="chart-wrap">
-      <div class="card-title">月付金額比較（寬限期 vs 寬限後）</div>
+      <div class="card-title">月付金額比較（首年 vs 長期／第8年起）</div>
       <canvas id="barChart"></canvas>
     </div>
     <div class="chart-wrap">
@@ -404,6 +571,7 @@
         <thead>
           <tr>
             <th>年度</th>
+            <th>新青安當年利率</th>
             <th>年繳總額（萬）</th>
             <th>償還本金（萬）</th>
             <th>支付利息（萬）</th>
@@ -416,6 +584,27 @@
     </div>
   </div>
 
+  <!-- Monthly Amortization Detail -->
+  <div class="card">
+    <div class="card-title">月付攤還明細表</div>
+    <div class="field-note">方案選擇與上方「年度本金／利息攤還表」共用，切換上方選單即可同步更新。</div>
+    <div class="table-wrap sched-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>月份</th>
+            <th>新青安當月利率</th>
+            <th>月付總額（元）</th>
+            <th>償還本金（元）</th>
+            <th>支付利息（元）</th>
+            <th>剩餘本金（萬）</th>
+          </tr>
+        </thead>
+        <tbody id="schedMonthlyBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Notes -->
   <div class="card notes">
     <div class="card-title">計算說明</div>
@@ -423,28 +612,24 @@
       <div class="note-block">
         <h3>📐 計算公式</h3>
         <ul>
-          <li><strong>銀行最高可貸</strong> = 房價 × 該行最高成數</li>
-          <li><strong>新青安可貸</strong> = MIN(房價 × 80%, 新青安上限, 銀行最高可貸)</li>
-          <li><strong>一般房貸</strong> = 銀行最高可貸 − 新青安可貸（假設貸好貸滿）</li>
-          <li><strong>寬限期月付</strong> = 新青安貸款 × 新青安月利率 + 一般房貸 × 該行月利率</li>
-          <li><strong>寬限後月付</strong> = PMT(新青安利率, 新青安剩餘期數) + PMT(該行利率, 該行剩餘期數)</li>
-          <li><strong>補助後月付</strong> = 寬限後月付 − 月補助（最低為 0）</li>
+          <li><strong>8 大行庫方案</strong>：新青安可貸 = MIN(房價 × 80%, 新青安上限, 銀行最高可貸)；一般房貸 = 銀行最高可貸 − 新青安可貸（貸好貸滿）</li>
+          <li><strong>一般民營銀行方案</strong>：貸款 A、貸款 B 為兩筆完全獨立的貸款（各自額度／利率／年限），總貸款 = A + B</li>
+          <li><strong>首年月付</strong> = 寬限期間（或無寬限期時的第 1 個月）以「第 1 年利率」計算之月付；8 大行庫新青安部分固定套用新青安 2.0 階梯利率表第 1 年利率</li>
+          <li><strong>長期月付／第8年起</strong> = 以新青安 2.0 補貼完全退場後的基準利率（第 8 年起）試算之月付，用於對照補貼結束後的負擔變化</li>
+          <li><strong>補助後月付</strong> = 首年月付 − 月補助（最低為 0）</li>
           <li><strong>月收入負擔比</strong> = 補助後月付 ÷ 月收入</li>
           <li><strong>現金緩衝</strong> = 自備款 −（房價 − 總貸款），即未投入頭期款、保留在手上的現金；負值代表自備款不足</li>
           <li><strong>緩衝可撐月數</strong> = 現金緩衝 ÷ 補助後月付；月補助越高、可撐越久</li>
-          <li><strong>年度攤還表</strong>：逐月模擬兩筆貸款（寬限期只繳息不還本），按年加總本金與利息</li>
+          <li><strong>年度攤還表</strong>：逐月模擬（寬限期只繳息不還本），8 大行庫新青安部分依 2.0 階梯利率逐年變動，每次利率換檔即以當時剩餘本金／期數重新攤提月付</li>
         </ul>
       </div>
       <div class="note-block">
         <h3>🏦 新青安貸款條件</h3>
         <ul>
-          <li>適用對象：40 歲以下首購族</li>
-          <li>貸款上限：1,000 萬元</li>
-          <li>最高成數：房屋鑑價的 80%</li>
-          <li>利率優惠：約 1.775%（政府補貼後）</li>
-          <li>最長年限：40 年</li>
-          <li>寬限期：最長 5 年（僅付利息）</li>
-          <li>新青安利率／年限／上限已併入各方案欄位，可依銀行實際報價調整</li>
+          <li>詳細 1.0 / 2.0 條件比較請見頁首「新青安 1.0 vs 2.0」卡片</li>
+          <li>本工具「8 大行庫」方案的新青安利率固定套用 2.0 階梯利率表，可於「新青安 2.0 階梯利率設定」卡片調整每一階段的利率</li>
+          <li>「一般民營銀行」方案不套用新青安，改以兩筆完全獨立貸款（A、B）試算</li>
+          <li>新青安上限、年限等仍可依各銀行方案個別調整</li>
         </ul>
       </div>
       <div class="note-block">
@@ -456,8 +641,8 @@
           <span class="legend-item"><span class="legend-dot" style="background:#d32f2f"></span><span class="badge badge-red">危險</span> &gt; 50%</span>
         </div>
         <ul style="margin-top:10px">
-          <li>負擔比以<strong>補助後月付</strong>計算</li>
-          <li>方案的寬限期同時適用新青安與一般房貸兩筆貸款</li>
+          <li>負擔比以<strong>首年補助後月付</strong>計算，貼近近期實際負擔</li>
+          <li>方案的寬限期同時適用兩筆貸款</li>
           <li>建議保留 6 個月支出作為緊急預備金</li>
           <li>以上為試算參考，不構成財務建議</li>
         </ul>
@@ -471,21 +656,52 @@
 
 <script>
 // ──────────────── State ────────────────
+const PUBLIC8_BANKS = ['台灣銀行', '土地銀行', '合作金庫', '第一銀行', '華南銀行', '彰化銀行', '台灣企銀', '兆豐銀行'];
+
+const XQ_SCHEDULE_DEFAULT = [
+  { maxYear: 3,        rate: 2.025 },
+  { maxYear: 4,        rate: 2.0875 },
+  { maxYear: 5,        rate: 2.15 },
+  { maxYear: 7,        rate: 2.2125 },
+  { maxYear: Infinity, rate: 2.275 },
+];
+let xinqinganV2Schedule = XQ_SCHEDULE_DEFAULT.map(t => ({ ...t }));
+
+function xqRate(year) {
+  for (const tier of xinqinganV2Schedule) {
+    if (year <= tier.maxYear) return tier.rate;
+  }
+  return xinqinganV2Schedule[xinqinganV2Schedule.length - 1].rate;
+}
+
 let plans = [
-  { name: '銀行 A', rate: 2.185, ltv: 80, years: 30, grace: 3, rateY: 1.775, yearsY: 40, youngLimit: 1000 },
-  { name: '銀行 B', rate: 2.06,  ltv: 75, years: 30, grace: 2, rateY: 1.775, yearsY: 40, youngLimit: 1000 },
-  { name: '銀行 C', rate: 2.5,   ltv: 80, years: 40, grace: 5, rateY: 1.775, yearsY: 40, youngLimit: 1000 },
+  { bankType: 'public8', name: '台灣銀行', rate: 2.3,  ltv: 80, years: 30, grace: 3, youngLimit: 1000, yearsY: 40 },
+  { bankType: 'public8', name: '土地銀行', rate: 2.2,  ltv: 75, years: 30, grace: 2, youngLimit: 1000, yearsY: 40 },
+  { bankType: 'private', name: '陽信銀行', grace: 2, ltv: 0,
+    loanA: { amount: 800, rate: 2.2, years: 30 },
+    loanB: { amount: 300, rate: 2.6, years: 30 } },
 ];
 
-const PLAN_FIELDS = [
-  { key: 'rate',       label: '一般房貸利率（%）',     min: 0, step: 0.001 },
-  { key: 'ltv',        label: '最高成數（%）',         min: 0, max: 100, step: 1 },
-  { key: 'years',      label: '年限（年）',            min: 1, max: 40, step: 1 },
-  { key: 'grace',      label: '寬限期（年）',          min: 0, max: 10, step: 1 },
-  { key: 'rateY',      label: '新青安利率（%）',       min: 0, step: 0.001 },
-  { key: 'yearsY',     label: '新青安年限（年）',      min: 1, max: 40, step: 1 },
-  { key: 'youngLimit', label: '新青安貸款上限（萬元）', min: 0, step: 100 },
+const PUBLIC8_FIELDS = [
+  { key: 'rate',       label: '一般房貸利率（%）',      min: 0, step: 0.001 },
+  { key: 'ltv',        label: '最高成數（%）',          min: 0, max: 100, step: 1 },
+  { key: 'years',      label: '一般房貸年限（年）',     min: 1, max: 40, step: 1 },
+  { key: 'grace',      label: '寬限期（年）',           min: 0, max: 10, step: 1 },
+  { key: 'youngLimit', label: '新青安上限（萬元）',     min: 0, step: 100 },
+  { key: 'yearsY',     label: '新青安年限（年）',       min: 1, max: 40, step: 1 },
 ];
+
+const PRIVATE_FIELDS = [
+  { key: 'loanA.amount', label: '貸款 A 額度（萬元）',   min: 0, step: 10 },
+  { key: 'loanA.rate',   label: '貸款 A 利率（%）',      min: 0, step: 0.001 },
+  { key: 'loanA.years',  label: '貸款 A 年限（年）',     min: 1, max: 40, step: 1 },
+  { key: 'loanB.amount', label: '貸款 B 額度（萬元）',   min: 0, step: 10 },
+  { key: 'loanB.rate',   label: '貸款 B 利率（%）',      min: 0, step: 0.001 },
+  { key: 'loanB.years',  label: '貸款 B 年限（年）',     min: 1, max: 40, step: 1 },
+  { key: 'grace',        label: '寬限期（年）',          min: 0, max: 10, step: 1 },
+  { key: 'ltv',          label: '貸款成數（%，可覆寫）', min: 0, max: 100, step: 1 },
+];
+
 let barChartInst = null;
 let lineChartInst = null;
 let schedChartInst = null;
@@ -495,6 +711,13 @@ let schedPlanIdx = 0;
 const $ = id => document.getElementById(id);
 const numVal = id => parseFloat($(id).value) || 0;
 const escapeHtml = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const getField = (obj, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
+function setField(obj, path, val) {
+  const parts = path.split('.');
+  let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+  o[parts[parts.length - 1]] = val;
+}
 
 // ──────────────── PMT ────────────────
 function pmt(rate, nper, pv) {
@@ -502,78 +725,168 @@ function pmt(rate, nper, pv) {
   return pv * rate / (1 - Math.pow(1 + rate, -nper));
 }
 
+// ──────────────── Down payment mode ────────────────
+function syncDownPaymentFromMode() {
+  const mode = $('downPaymentMode').value;
+  const dp = $('downPayment');
+  const unit = $('downPaymentUnit');
+  if (mode === 'manual') {
+    dp.removeAttribute('readonly');
+    unit.textContent = '';
+    return;
+  }
+  const pct = parseFloat(mode);
+  const price = numVal('totalPrice');
+  const val = Math.round(price * pct * 10) / 10;
+  dp.value = val;
+  dp.setAttribute('readonly', 'readonly');
+  unit.textContent = `= ${val.toLocaleString()} 萬（總房價 ${Math.round(pct * 100)}%）`;
+}
+
+// ──────────────── Xinqingan 2.0 schedule UI ────────────────
+function renderXqSchedule() {
+  const row = $('xqScheduleRow');
+  row.innerHTML = xinqinganV2Schedule.map((t, i) =>
+    `<td><input type="number" step="0.001" min="0" value="${t.rate}" data-tier="${i}"> %</td>`).join('');
+  row.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.tier, 10);
+      xinqinganV2Schedule[idx].rate = parseFloat(e.target.value) || 0;
+      renderResults();
+    });
+  });
+}
+
+function resetXqSchedule() {
+  xinqinganV2Schedule = XQ_SCHEDULE_DEFAULT.map(t => ({ ...t }));
+  renderXqSchedule();
+  renderResults();
+}
+
+// ──────────────── Private plan ltv auto-sync ────────────────
+function syncPrivateLtv(p) {
+  const price = numVal('totalPrice');
+  p.ltv = price > 0 ? Math.round((p.loanA.amount + p.loanB.amount) / price * 1000) / 10 : 0;
+}
+
 // ──────────────── Core calculation ────────────────
 function calcRow(plan) {
-  const price      = numVal('totalPrice');
-  const down       = numVal('downPayment');
-  const income     = numVal('monthlyIncome');
-  const subsidy    = numVal('monthlySubsidy');
+  const price   = numVal('totalPrice');
+  const down    = numVal('downPayment');
+  const income  = numVal('monthlyIncome');
+  const subsidy = numVal('monthlySubsidy');
+  const grace   = plan.grace;
 
-  const rateY      = plan.rateY / 100 / 12;
-  const rateN      = plan.rate  / 100 / 12;
-  const bankMax    = price * plan.ltv / 100;
+  let loanOne, loanTwo, totalLoan, ltv, yr1Pay, longPay;
 
-  // 貸好貸滿：以該銀行最高成數貸款，自備款只投入必要頭期款，其餘保留為現金緩衝
-  const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
-  const normalLoan = Math.max(bankMax - youngLoan, 0);
-  const totalLoan  = youngLoan + normalLoan;
-  const ltv        = price > 0 ? totalLoan / price : 0;
+  if (plan.bankType === 'public8') {
+    const bankMax    = price * plan.ltv / 100;
+    const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
+    const normalLoan = Math.max(bankMax - youngLoan, 0);
+    totalLoan = youngLoan + normalLoan;
+    ltv       = price > 0 ? totalLoan / price : 0;
 
-  // 寬限期月付（純利息）
-  const gracePay   = youngLoan * rateY + normalLoan * rateN;
+    const rateY1 = xqRate(1) / 100 / 12;
+    const rateY8 = xqRate(8) / 100 / 12;
+    const rateN  = plan.rate / 100 / 12;
+    const remY   = (plan.yearsY - grace) * 12;
+    const remN   = (plan.years  - grace) * 12;
 
-  // 寬限後月付（本息攤還；方案的寬限期同時適用兩筆貸款）
-  const remY       = (plan.yearsY - plan.grace) * 12;
-  const remN       = (plan.years  - plan.grace) * 12;
-  const afterPayY  = remY > 0 ? pmt(rateY, remY, youngLoan)  : 0;
-  const afterPayN  = remN > 0 ? pmt(rateN, remN, normalLoan) : 0;
-  const afterPay   = afterPayY + afterPayN;
+    yr1Pay = grace > 0
+      ? youngLoan * rateY1 + normalLoan * rateN
+      : (remY > 0 ? pmt(rateY1, remY, youngLoan) : 0) + (remN > 0 ? pmt(rateN, remN, normalLoan) : 0);
 
-  // 補助後實際月負擔
-  const netPay     = Math.max(afterPay - subsidy, 0);
+    longPay = (remY > 0 ? pmt(rateY8, remY, youngLoan) : 0) + (remN > 0 ? pmt(rateN, remN, normalLoan) : 0);
 
-  // 月收入負擔比（以補助後月付計算）
-  const ratio      = income > 0 ? netPay / income : 0;
+    loanOne = youngLoan;
+    loanTwo = normalLoan;
+  } else {
+    const { loanA, loanB } = plan;
+    totalLoan = loanA.amount + loanB.amount;
+    ltv       = plan.ltv / 100;
 
-  // 現金緩衝（一次性現金）與可撐月數（受月補助影響）
+    const rateA = loanA.rate / 100 / 12;
+    const rateB = loanB.rate / 100 / 12;
+    const remA  = (loanA.years - grace) * 12;
+    const remB  = (loanB.years - grace) * 12;
+
+    yr1Pay = grace > 0
+      ? loanA.amount * rateA + loanB.amount * rateB
+      : (remA > 0 ? pmt(rateA, remA, loanA.amount) : 0) + (remB > 0 ? pmt(rateB, remB, loanB.amount) : 0);
+
+    longPay = (remA > 0 ? pmt(rateA, remA, loanA.amount) : 0) + (remB > 0 ? pmt(rateB, remB, loanB.amount) : 0);
+
+    loanOne = loanA.amount;
+    loanTwo = loanB.amount;
+  }
+
+  const netPay = Math.max(yr1Pay - subsidy, 0);
+  const ratio  = income > 0 ? netPay / income : 0;
+
   const cashBuffer   = down - (price - totalLoan);
   const bufferMonths = cashBuffer > 0 ? (netPay > 0 ? cashBuffer / netPay : Infinity) : null;
 
-  return { plan, youngLoan, normalLoan, totalLoan, ltv,
-           gracePay, afterPay, netPay, ratio, cashBuffer, bufferMonths };
+  return { plan, loanOne, loanTwo, totalLoan, ltv,
+           yr1Pay, longPay, netPay, ratio, cashBuffer, bufferMonths };
 }
 
-// ──────────────── Yearly amortization ────────────────
-// 逐月模擬兩筆貸款（寬限期只繳息），彙總成年度本金／利息
-function amortYearly(plan) {
-  const price   = numVal('totalPrice');
-  const bankMax = price * plan.ltv / 100;
-  const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
-  const normalLoan = Math.max(bankMax - youngLoan, 0);
+// ──────────────── Amortization helpers ────────────────
+// 逐月模擬各筆貸款（寬限期只繳息），8 大行庫新青安部分依 2.0 階梯利率逐年換檔重新攤提
+function buildAmortLoans(plan) {
+  const price = numVal('totalPrice');
+  const grace = plan.grace * 12;
 
-  const loans = [
-    { bal: youngLoan,  rate: plan.rateY / 100 / 12, months: plan.yearsY * 12, grace: plan.grace * 12 },
-    { bal: normalLoan, rate: plan.rate  / 100 / 12, months: plan.years  * 12, grace: plan.grace * 12 },
-  ].filter(l => l.bal > 0);
+  let loans;
+  if (plan.bankType === 'public8') {
+    const bankMax    = price * plan.ltv / 100;
+    const youngLoan  = Math.min(price * 0.8, plan.youngLimit, bankMax);
+    const normalLoan = Math.max(bankMax - youngLoan, 0);
+    loans = [
+      { bal: youngLoan,  months: plan.yearsY * 12, grace, rateFn: m => xqRate(Math.ceil(m / 12)) / 100 / 12 },
+      { bal: normalLoan, months: plan.years  * 12, grace, rateFn: () => plan.rate / 100 / 12 },
+    ];
+  } else {
+    const { loanA, loanB } = plan;
+    loans = [
+      { bal: loanA.amount, months: loanA.years * 12, grace, rateFn: () => loanA.rate / 100 / 12 },
+      { bal: loanB.amount, months: loanB.years * 12, grace, rateFn: () => loanB.rate / 100 / 12 },
+    ];
+  }
+  loans = loans.filter(l => l.bal > 0);
+  loans.forEach(l => { l.grace = Math.min(l.grace, l.months); l.pay = 0; l.curRate = null; });
+  return loans;
+}
+
+function stepAmortMonth(loans, m) {
+  let pri = 0, intr = 0;
   loans.forEach(l => {
-    l.grace = Math.min(l.grace, l.months);
-    l.pay   = l.months > l.grace ? pmt(l.rate, l.months - l.grace, l.bal) : 0;
+    if (m > l.months || l.bal <= 0) return;
+    const rate = l.rateFn(m);
+    const i = l.bal * rate;
+    intr += i;
+    if (m > l.grace) {
+      if (m === l.grace + 1 || rate !== l.curRate) {
+        l.curRate = rate;
+        const remaining = l.months - m + 1;
+        l.pay = remaining > 0 ? pmt(rate, remaining, l.bal) : 0;
+      }
+      const p = Math.min(l.pay - i, l.bal);
+      l.bal -= p;
+      pri += p;
+    } else {
+      l.curRate = rate;
+    }
   });
+  return { pri, intr };
+}
 
+// 彙總成年度本金／利息
+function amortYearly(plan) {
+  const loans = buildAmortLoans(plan);
   const totalMonths = Math.max(0, ...loans.map(l => l.months));
   const years = [];
   for (let m = 1; m <= totalMonths; m++) {
-    let pri = 0, intr = 0;
-    loans.forEach(l => {
-      if (m > l.months || l.bal <= 0) return;
-      const i = l.bal * l.rate;
-      intr += i;
-      if (m > l.grace) {
-        const p = Math.min(l.pay - i, l.bal);
-        l.bal -= p;
-        pri += p;
-      }
-    });
+    const { pri, intr } = stepAmortMonth(loans, m);
     const y = Math.ceil(m / 12) - 1;
     if (!years[y]) years[y] = { year: y + 1, principal: 0, interest: 0, balance: 0 };
     years[y].principal += pri;
@@ -585,8 +898,32 @@ function amortYearly(plan) {
     yr.total = yr.principal + yr.interest;
     cum += yr.interest;
     yr.cumInterest = cum;
+    yr.xqRatePct = plan.bankType === 'public8' ? xqRate(yr.year) : null;
   });
   return years;
+}
+
+// 逐月明細（月付攤還明細表用）
+function amortMonthly(plan) {
+  const loans = buildAmortLoans(plan);
+  const graceMonths = plan.grace * 12;
+  const totalMonths = Math.max(0, ...loans.map(l => l.months));
+  const rows = [];
+  for (let m = 1; m <= totalMonths; m++) {
+    const { pri, intr } = stepAmortMonth(loans, m);
+    const balance = loans.reduce((s, l) => s + Math.max(l.bal, 0), 0);
+    rows.push({
+      month: m,
+      year: Math.ceil(m / 12),
+      isGrace: m <= graceMonths,
+      xqRatePct: plan.bankType === 'public8' ? xqRate(Math.ceil(m / 12)) : null,
+      total: pri + intr,
+      principal: pri,
+      interest: intr,
+      balance,
+    });
+  }
+  return rows;
 }
 
 function renderSchedule() {
@@ -604,6 +941,7 @@ function renderSchedule() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>第 ${yr.year} 年${isGrace ? '<span class="grace-tag">寬限</span>' : ''}</td>
+      <td>${yr.xqRatePct !== null ? yr.xqRatePct.toFixed(3) + '%' : '—'}</td>
       <td>${fmtWan(yr.total)}</td>
       <td>${fmtWan(yr.principal)}</td>
       <td>${fmtWan(yr.interest)}</td>
@@ -641,6 +979,22 @@ function renderSchedule() {
       }
     }
   });
+
+  renderMonthlySchedule(plans[schedPlanIdx]);
+}
+
+function renderMonthlySchedule(plan) {
+  const rows = amortMonthly(plan);
+  const tbody = $('schedMonthlyBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>第 ${r.month} 月（第 ${r.year} 年）${r.isGrace ? '<span class="grace-tag">寬限</span>' : ''}</td>
+      <td>${r.xqRatePct !== null ? r.xqRatePct.toFixed(3) + '%' : '—'}</td>
+      <td>${fmtPay(r.total)}</td>
+      <td>${fmtPay(r.principal)}</td>
+      <td>${fmtPay(r.interest)}</td>
+      <td>${fmtWan(r.balance)}</td>
+    </tr>`).join('');
 }
 
 // ──────────────── Badge ────────────────
@@ -665,34 +1019,92 @@ function renderPlans() {
   plans.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = 'plan-card';
+    const isPublic = p.bankType === 'public8';
+    const fields = isPublic ? PUBLIC8_FIELDS : PRIVATE_FIELDS;
+    const presetOptions = PUBLIC8_BANKS.map(b =>
+      `<option value="${b}"${p.name === b ? ' selected' : ''}>${b}</option>`).join('')
+      + `<option value=""${!PUBLIC8_BANKS.includes(p.name) ? ' selected' : ''}>其他／自訂</option>`;
+
     card.innerHTML = `
+      <div class="plan-type-row">
+        <label>銀行類型</label>
+        <select data-i="${i}" data-type-select>
+          <option value="public8"${isPublic ? ' selected' : ''}>8 大行庫</option>
+          <option value="private"${!isPublic ? ' selected' : ''}>一般民營銀行</option>
+        </select>
+        ${isPublic ? `
+        <label>預設銀行</label>
+        <select data-i="${i}" data-preset-select>${presetOptions}</select>` : ''}
+      </div>
       <div class="plan-card-top">
         <label>銀行 / 方案名稱</label>
         <input type="text" value="${escapeHtml(p.name)}" data-i="${i}" data-f="name">
         <button class="btn-remove" onclick="removePlan(${i})" title="移除">× 移除</button>
       </div>
+      ${isPublic ? `<div class="field-note">新青安部分利率固定套用「新青安 2.0 階梯利率設定」，此處不可個別調整。</div>` : ''}
       <div class="plan-fields">
-        ${PLAN_FIELDS.map(f => `
+        ${fields.map(f => `
           <div class="field">
             <label>${f.label}</label>
-            <input type="number" value="${p[f.key]}" min="${f.min}"${f.max !== undefined ? ` max="${f.max}"` : ''} step="${f.step}" data-i="${i}" data-f="${f.key}">
+            <input type="number" value="${getField(p, f.key)}" min="${f.min}"${f.max !== undefined ? ` max="${f.max}"` : ''} step="${f.step}" data-i="${i}" data-f="${f.key}">
           </div>`).join('')}
       </div>
     `;
     wrap.appendChild(card);
   });
+
+  wrap.querySelectorAll('select[data-type-select]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const i = parseInt(e.target.dataset.i, 10);
+      const newType = e.target.value;
+      if (plans[i].bankType === newType) return;
+      const keepName = plans[i].name;
+      const keepGrace = plans[i].grace ?? 3;
+      if (newType === 'public8') {
+        plans[i] = { bankType: 'public8', name: keepName, rate: 2.3, ltv: 80, years: 30, grace: keepGrace, youngLimit: 1000, yearsY: 40 };
+      } else {
+        plans[i] = {
+          bankType: 'private', name: keepName, grace: keepGrace, ltv: 0,
+          loanA: { amount: 500, rate: 2.2, years: 30 },
+          loanB: { amount: 200, rate: 2.6, years: 30 },
+        };
+        syncPrivateLtv(plans[i]);
+      }
+      renderAll();
+    });
+  });
+
+  wrap.querySelectorAll('select[data-preset-select]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const i = parseInt(e.target.dataset.i, 10);
+      if (e.target.value) {
+        plans[i].name = e.target.value;
+        renderAll();
+      }
+    });
+  });
+
   // 編輯欄位只重算結果、不重繪輸入列，避免打字時失去焦點
   wrap.querySelectorAll('input').forEach(inp => {
     inp.addEventListener('input', e => {
       const { i, f } = e.target.dataset;
-      plans[i][f] = f === 'name' ? e.target.value : (parseFloat(e.target.value) || 0);
+      if (!f) return;
+      const idx = parseInt(i, 10);
+      const val = f === 'name' ? e.target.value : (parseFloat(e.target.value) || 0);
+      setField(plans[idx], f, val);
+      if (plans[idx].bankType === 'private' && (f === 'loanA.amount' || f === 'loanB.amount')) {
+        syncPrivateLtv(plans[idx]);
+        const card = e.target.closest('.plan-card');
+        const ltvInput = card.querySelector('input[data-f="ltv"]');
+        if (ltvInput) ltvInput.value = plans[idx].ltv;
+      }
       renderResults();
     });
   });
 }
 
 function addPlan() {
-  plans.push({ name: `銀行 ${String.fromCharCode(65 + plans.length)}`, rate: 2.3, ltv: 80, years: 30, grace: 3, rateY: 1.775, yearsY: 40, youngLimit: 1000 });
+  plans.push({ bankType: 'public8', name: `銀行 ${String.fromCharCode(65 + plans.length)}`, rate: 2.3, ltv: 80, years: 30, grace: 3, youngLimit: 1000, yearsY: 40 });
   renderAll();
 }
 
@@ -708,15 +1120,18 @@ function renderTable(rows) {
   tbody.innerHTML = '';
   rows.forEach(r => {
     const [cls, label] = ratioClass(r.ratio);
+    const isPublic = r.plan.bankType === 'public8';
+    const badge1 = isPublic ? '<span class="loan-badge">新青安2.0</span>' : '<span class="loan-badge">貸款A</span>';
+    const badge2 = isPublic ? '<span class="loan-badge">一般利率</span>' : '<span class="loan-badge">貸款B</span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${escapeHtml(r.plan.name)}</td>
-      <td>${fmtWan(r.youngLoan)}</td>
-      <td>${fmtWan(r.normalLoan)}</td>
+      <td>${fmtWan(r.loanOne)}${badge1}</td>
+      <td>${fmtWan(r.loanTwo)}${badge2}</td>
       <td>${fmtWan(r.totalLoan)}</td>
       <td>${fmtPct(r.ltv)}</td>
-      <td>${fmtPay(r.gracePay)}</td>
-      <td>${fmtPay(r.afterPay)}</td>
+      <td>${fmtPay(r.yr1Pay)}</td>
+      <td>${fmtPay(r.longPay)}</td>
       <td>${fmtPay(r.netPay)}</td>
       <td>${fmtPct(r.ratio)}</td>
       <td><span class="badge ${cls}">${label}</span></td>
@@ -738,9 +1153,9 @@ const CHART_COLORS = {
 };
 
 function renderBarChart(rows) {
-  const labels  = rows.map(r => r.plan.name);
-  const grace   = rows.map(r => Math.round(r.gracePay * 10000));
-  const after   = rows.map(r => Math.round(r.afterPay * 10000));
+  const labels = rows.map(r => r.plan.name);
+  const yr1    = rows.map(r => Math.round(r.yr1Pay  * 10000));
+  const long   = rows.map(r => Math.round(r.longPay * 10000));
 
   if (barChartInst) barChartInst.destroy();
   barChartInst = new Chart($('barChart'), {
@@ -748,8 +1163,8 @@ function renderBarChart(rows) {
     data: {
       labels,
       datasets: [
-        { label: '寬限期月付（元）', data: grace, backgroundColor: CHART_COLORS.grace, borderRadius: 4 },
-        { label: '寬限後月付（元）', data: after,  backgroundColor: CHART_COLORS.after, borderRadius: 4 },
+        { label: '首年月付（元）', data: yr1,  backgroundColor: CHART_COLORS.grace, borderRadius: 4 },
+        { label: '長期／第8年起月付（元）', data: long, backgroundColor: CHART_COLORS.after, borderRadius: 4 },
       ]
     },
     options: {
@@ -772,9 +1187,9 @@ function renderBarChart(rows) {
 function renderLineChart(rows) {
   const labels    = rows.map(r => r.plan.name);
   const subsidy   = numVal('monthlySubsidy');
-  // 未補助的原始負擔比（afterPay / income）
+  // 未補助的原始負擔比（yr1Pay / income）
   const income    = numVal('monthlyIncome');
-  const rawRatios = rows.map(r => parseFloat((r.afterPay / income * 100).toFixed(2)));
+  const rawRatios = rows.map(r => parseFloat((r.yr1Pay / income * 100).toFixed(2)));
   const netRatios = rows.map(r => parseFloat((r.ratio * 100).toFixed(2)));
   const n         = rows.length;
   const showNet   = subsidy > 0;
@@ -845,7 +1260,20 @@ function renderAll() {
 }
 
 // ──────────────── Listeners ────────────────
-['totalPrice','downPayment','monthlyIncome','monthlySubsidy']
+$('totalPrice').addEventListener('input', () => {
+  syncDownPaymentFromMode();
+  plans.forEach(p => { if (p.bankType === 'private') syncPrivateLtv(p); });
+  renderAll();
+});
+
+$('downPayment').addEventListener('input', renderResults);
+
+$('downPaymentMode').addEventListener('change', () => {
+  syncDownPaymentFromMode();
+  renderResults();
+});
+
+['monthlyIncome', 'monthlySubsidy']
   .forEach(id => $(id).addEventListener('input', renderResults));
 
 $('schedPlan').addEventListener('change', e => {
@@ -854,6 +1282,9 @@ $('schedPlan').addEventListener('change', e => {
 });
 
 // ──────────────── Init ────────────────
+plans.forEach(p => { if (p.bankType === 'private') syncPrivateLtv(p); });
+renderXqSchedule();
+syncDownPaymentFromMode();
 renderAll();
 </script>
 </body>
