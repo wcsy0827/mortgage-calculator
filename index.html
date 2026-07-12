@@ -588,6 +588,10 @@
   <div class="card">
     <div class="card-title">月付攤還明細表</div>
     <div class="field-note">方案選擇與上方「年度本金／利息攤還表」共用，切換上方選單即可同步更新。</div>
+    <div class="sched-controls">
+      <label>篩選年度</label>
+      <select id="schedMonthYear"></select>
+    </div>
     <div class="table-wrap sched-scroll">
       <table>
         <thead>
@@ -706,6 +710,7 @@ let barChartInst = null;
 let lineChartInst = null;
 let schedChartInst = null;
 let schedPlanIdx = 0;
+let schedMonthYear = 'all';
 
 // ──────────────── DOM helpers ────────────────
 const $ = id => document.getElementById(id);
@@ -985,8 +990,18 @@ function renderSchedule() {
 
 function renderMonthlySchedule(plan) {
   const rows = amortMonthly(plan);
+  const maxYear = rows.reduce((m, r) => Math.max(m, r.year), 0);
+  if (schedMonthYear !== 'all' && parseInt(schedMonthYear, 10) > maxYear) schedMonthYear = 'all';
+
+  const yearSel = $('schedMonthYear');
+  const yearOptions = Array.from({ length: maxYear }, (_, i) => i + 1)
+    .map(y => `<option value="${y}"${String(y) === schedMonthYear ? ' selected' : ''}>第 ${y} 年</option>`).join('');
+  yearSel.innerHTML = `<option value="all"${schedMonthYear === 'all' ? ' selected' : ''}>全部（每年每月）</option>` + yearOptions;
+
+  const filtered = schedMonthYear === 'all' ? rows : rows.filter(r => r.year === parseInt(schedMonthYear, 10));
+
   const tbody = $('schedMonthlyBody');
-  tbody.innerHTML = rows.map(r => `
+  tbody.innerHTML = filtered.map(r => `
     <tr>
       <td>第 ${r.month} 月（第 ${r.year} 年）${r.isGrace ? '<span class="grace-tag">寬限</span>' : ''}</td>
       <td>${r.xqRatePct !== null ? r.xqRatePct.toFixed(3) + '%' : '—'}</td>
@@ -1279,6 +1294,11 @@ $('downPaymentMode').addEventListener('change', () => {
 $('schedPlan').addEventListener('change', e => {
   schedPlanIdx = parseInt(e.target.value, 10) || 0;
   renderSchedule();
+});
+
+$('schedMonthYear').addEventListener('change', e => {
+  schedMonthYear = e.target.value;
+  renderMonthlySchedule(plans[schedPlanIdx]);
 });
 
 // ──────────────── Init ────────────────
