@@ -102,6 +102,28 @@
     margin-top: 3px;
   }
 
+  /* ── Scenario bar ── */
+  .scenario-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .scenario-bar select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+    min-width: 200px;
+    flex: 1;
+    max-width: 320px;
+  }
+  .scenario-bar select:focus { border-color: var(--primary); }
+
   /* ── Xinqingan compare card ── */
   .xq-compare {
     display: grid;
@@ -414,6 +436,18 @@
 </header>
 
 <div class="container">
+
+  <!-- Saved scenarios -->
+  <div class="card">
+    <div class="card-title">💾 已存情境</div>
+    <div class="scenario-bar">
+      <select id="scenarioSelect"></select>
+      <button class="btn-add" style="margin-top:0" onclick="saveScenarioAs()">＋ 另存新情境</button>
+      <button class="btn-reset" onclick="renameScenario()">重新命名</button>
+      <button class="btn-remove" onclick="deleteScenario()">× 刪除</button>
+    </div>
+    <div class="field-note">所有變更會即時自動儲存到目前選擇的情境；資料只存在這台裝置的瀏覽器（localStorage），不會上傳。</div>
+  </div>
 
   <!-- Xinqingan 1.0 vs 2.0 -->
   <div class="card">
@@ -1214,6 +1248,118 @@ function renderLineChart(rows) {
   });
 }
 
+// ──────────────── Scenario persistence (localStorage) ────────────────
+const STORAGE_KEY = 'mortgageCalcScenarios.v1';
+let store = { scenarios: [], activeId: null };
+
+function currentData() {
+  return {
+    totalPrice:     numVal('totalPrice'),
+    monthlyIncome:  numVal('monthlyIncome'),
+    monthlySubsidy: numVal('monthlySubsidy'),
+    // 只存各階段利率，maxYear 含 Infinity 無法 JSON 序列化，載入時以預設表重建
+    xqRates: xinqinganV2Schedule.map(t => t.rate),
+    plans: JSON.parse(JSON.stringify(plans)),
+    schedPlanIdx,
+    schedMonthYear,
+  };
+}
+
+function applyData(d) {
+  $('totalPrice').value     = d.totalPrice;
+  $('monthlyIncome').value  = d.monthlyIncome;
+  $('monthlySubsidy').value = d.monthlySubsidy;
+  xinqinganV2Schedule = XQ_SCHEDULE_DEFAULT.map((t, i) => ({ ...t, rate: d.xqRates?.[i] ?? t.rate }));
+  plans = JSON.parse(JSON.stringify(d.plans));
+  schedPlanIdx   = Math.min(d.schedPlanIdx || 0, plans.length - 1);
+  schedMonthYear = d.schedMonthYear || 'all';
+}
+
+function persistStore() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); } catch (e) { /* 無痕模式等情況下靜默略過 */ }
+}
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.scenarios) || parsed.scenarios.length === 0) return false;
+    store = parsed;
+    if (!store.scenarios.some(s => s.id === store.activeId)) store.activeId = store.scenarios[0].id;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function activeScenario() {
+  return store.scenarios.find(s => s.id === store.activeId);
+}
+
+function saveState() {
+  const sc = activeScenario();
+  if (!sc) return;
+  sc.data = currentData();
+  persistStore();
+}
+
+function newScenarioId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function renderScenarioBar() {
+  $('scenarioSelect').innerHTML = store.scenarios.map(s =>
+    `<option value="${s.id}"${s.id === store.activeId ? ' selected' : ''}>${escapeHtml(s.name)}</option>`).join('');
+}
+
+function switchScenario(id) {
+  const sc = store.scenarios.find(s => s.id === id);
+  if (!sc || id === store.activeId) return;
+  store.activeId = id;
+  applyData(sc.data);
+  persistStore();
+  renderScenarioBar();
+  renderXqSchedule();
+  renderAll();
+}
+
+function saveScenarioAs() {
+  const name = prompt('新情境名稱：', `情境 ${store.scenarios.length + 1}`);
+  if (!name) return;
+  const sc = { id: newScenarioId(), name: name.trim(), data: currentData() };
+  store.scenarios.push(sc);
+  store.activeId = sc.id;
+  persistStore();
+  renderScenarioBar();
+}
+
+function renameScenario() {
+  const sc = activeScenario();
+  if (!sc) return;
+  const name = prompt('重新命名情境：', sc.name);
+  if (!name) return;
+  sc.name = name.trim();
+  persistStore();
+  renderScenarioBar();
+}
+
+function deleteScenario() {
+  if (store.scenarios.length <= 1) {
+    alert('至少需保留一組情境。');
+    return;
+  }
+  const sc = activeScenario();
+  if (!sc || !confirm(`確定刪除情境「${sc.name}」？此動作無法復原。`)) return;
+  store.scenarios = store.scenarios.filter(s => s.id !== sc.id);
+  store.activeId = store.scenarios[0].id;
+  applyData(activeScenario().data);
+  persistStore();
+  renderScenarioBar();
+  renderXqSchedule();
+  renderAll();
+}
+
 // ──────────────── Main render ────────────────
 function renderResults() {
   const rows = plans.map(calcRow);
@@ -1221,6 +1367,7 @@ function renderResults() {
   renderBarChart(rows);
   renderLineChart(rows);
   renderSchedule();
+  saveState();
 }
 
 function renderAll() {
@@ -1240,15 +1387,27 @@ $('totalPrice').addEventListener('input', () => {
 $('schedPlan').addEventListener('change', e => {
   schedPlanIdx = parseInt(e.target.value, 10) || 0;
   renderSchedule();
+  saveState();
 });
 
 $('schedMonthYear').addEventListener('change', e => {
   schedMonthYear = e.target.value;
   renderMonthlySchedule(plans[schedPlanIdx]);
+  saveState();
 });
+
+$('scenarioSelect').addEventListener('change', e => switchScenario(e.target.value));
 
 // ──────────────── Init ────────────────
 plans.forEach(p => { if (p.bankType === 'private') syncPrivateLtv(p); });
+if (loadStore()) {
+  applyData(activeScenario().data);
+} else {
+  const sc = { id: newScenarioId(), name: '預設情境', data: currentData() };
+  store = { scenarios: [sc], activeId: sc.id };
+  persistStore();
+}
+renderScenarioBar();
 renderXqSchedule();
 renderAll();
 </script>
