@@ -466,7 +466,7 @@
       <div class="xq-version v2">
         <h3>新青安 2.0（草案，預計 2026/8/1 上路）</h3>
         <ul>
-          <li><strong>利率</strong>：改採 7 年階梯式遞減補貼，第 1–3 年約 2.03%、第 4 年約 2.09%、第 5 年約 2.15%、第 6–7 年約 2.21%，第 8 年起補貼歸零、回到基準利率約 2.275%</li>
+          <li><strong>利率</strong>：改採 7 年階梯式遞減補貼，第 1–3 年約 1.775%、第 4 年約 1.9%、第 5 年約 2.025%、第 6–7 年約 2.15%，第 8 年起補貼歸零、回到基準利率約 2.275%</li>
           <li><strong>貸款上限</strong>：1,000 萬元（草案：育有未成年子女家庭上限可能提高至 1,500 萬）</li>
           <li><strong>新增排富</strong>：年收入 200 萬元以上不得申貸；房屋總價依縣市高價住宅門檻分級限制</li>
           <li><strong>年齡限制</strong>：申貸年齡上限 50 歲，且年齡＋貸款年數 ≤ 80</li>
@@ -660,10 +660,10 @@
 const PUBLIC8_BANKS = ['台灣銀行', '土地銀行', '合作金庫', '第一銀行', '華南銀行', '彰化銀行', '台灣企銀', '兆豐銀行'];
 
 const XQ_SCHEDULE_DEFAULT = [
-  { maxYear: 3,        rate: 2.025 },
-  { maxYear: 4,        rate: 2.0875 },
-  { maxYear: 5,        rate: 2.15 },
-  { maxYear: 7,        rate: 2.2125 },
+  { maxYear: 3,        rate: 1.775 },
+  { maxYear: 4,        rate: 1.9 },
+  { maxYear: 5,        rate: 2.025 },
+  { maxYear: 7,        rate: 2.15 },
   { maxYear: Infinity, rate: 2.275 },
 ];
 let xinqinganV2Schedule = XQ_SCHEDULE_DEFAULT.map(t => ({ ...t }));
